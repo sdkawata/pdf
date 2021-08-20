@@ -1,12 +1,13 @@
 const checkHeader = (reader:Reader) => {
   const headerString = reader.readStringUntilEOL()
   return headerString
-  console.log("header", headerString)
 }
 
 const checkEof = (reader:Reader) => {
   const eofString = reader.reverseReadStringUntilEOL()
-  console.log("eof", eofString)
+  if (eofString !== "%%EOF") {
+    throw new Error("EOF string not found")
+  }
 }
 
 export class Document {
@@ -44,7 +45,7 @@ class Reader {
     while (this.view[this.current] !== 0x0a && this.view[this.current] !== 0x0d) {
       this.current++
     }
-    const str = String.fromCharCode.apply("", new Uint8Array(this.buf, start, this.current - start))
+    const str = String.fromCharCode.apply("", new Uint8Array(this.buf.slice(start, this.current)))
     this.current++
     return str
   }
@@ -64,7 +65,7 @@ class Reader {
     while (this.view[this.current] !== 0x0a && this.view[this.current] !== 0x0d) {
       this.current--
     }
-    const str = String.fromCharCode.apply("", new Uint8Array(this.buf, this.current + 1, start - this.current))
+    const str = String.fromCharCode.apply("", new Uint8Array(this.buf.slice(this.current + 1, start + 1)))
     return str
   }
   seek(ptr:number) {
