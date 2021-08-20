@@ -1,3 +1,4 @@
+import {hot} from 'react-hot-loader'
 import React from 'react'
 import ReactDOM from 'react-dom'
 
@@ -5,4 +6,6 @@ const Index: React.FC = () => {
   return <div>Hello!</div>
 }
 
-ReactDOM.render(<Index/>, document.getElementById('app'))
+const Hot = hot(module)(Index)
+
+ReactDOM.render(<Hot/>, document.getElementById('app'))
