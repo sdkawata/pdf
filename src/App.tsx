@@ -29,6 +29,7 @@ const App: React.FC = () => {
       }) as ArrayBuffer
       const pdfDocument = await parse(arrayBuffer)
       setPdfDocument(pdfDocument)
+      console.log(pdfDocument.getTableEntries())
     }
     document.body.addEventListener('dragover', dragOverListener)
     document.body.addEventListener('dragenter', dragEnterListener)
