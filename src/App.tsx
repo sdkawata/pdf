@@ -16,6 +16,10 @@ overflow-y: scroll;
 const ObjectRow = styled.div`
 cursor: pointer;
 `
+
+const Error = styled.div`
+background-color: red;
+`
 const asJsObject = (object:PdfTopLevelObject): any => {
   if (object instanceof PdfDict) {
     const ret = {}
@@ -34,8 +38,12 @@ const asJsObject = (object:PdfTopLevelObject): any => {
   }
   return object
 }
-const ObjectDisplay: React.FC<{object:IndirectObject}> = ({object}) => {
-  return <pre><code>{JSON.stringify(asJsObject(object.getValue()), null, "  ")}</code></pre>
+const ObjectDisplay: React.FC<{object:PdfTopLevelObject}> = ({object}) => {
+  return <pre><code>{JSON.stringify(asJsObject(object), null, "  ")}</code></pre>
+}
+
+const ErrorDisplay: React.FC<{message:string}> = ({message}) => {
+  return <Error>{message}</Error>
 }
 
 const App: React.FC = () => {
@@ -74,7 +82,12 @@ const App: React.FC = () => {
     }
   }, [])
   const showObject = (object:IndirectObject) => {
-    setLeftInfo(<ObjectDisplay object={object}/>)
+    try {
+      const value = object.getValue()
+      setLeftInfo(<ObjectDisplay object={value}/>)
+    } catch (e) {
+      setLeftInfo(<ErrorDisplay message={e.message}/>)
+    }
   }
   return (
     <>
