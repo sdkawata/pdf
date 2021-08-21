@@ -12,7 +12,7 @@ margin: 2px;
 border: 1px solid #eee;
 box-shadow: 1px 1px 1px #eee;
 height: 100%;
-overflow-y: scroll;
+overflow: hidden;
 `
 
 const ObjectRow = styled.div<{selected?:boolean}>`
@@ -106,6 +106,12 @@ const ErrorDisplay: React.FC<{message:string}> = ({message}) => {
   return <Error>{message}</Error>
 }
 
+
+const RightPanelWrapper = styled.div`
+height: 100%;
+overflow:scroll;
+`
+
 const RightPanel: React.FC = () => {
   const rightPanel = useRecoilValue(rightPanelState)
   const objectPanel =useMemo(() => {
@@ -125,6 +131,34 @@ const RightPanel: React.FC = () => {
   }
   return <></>
 }
+
+const tabHeight = "40px"
+const StyledTabSelector = styled.div`
+height: ${tabHeight};
+width: 100%;
+`
+const StyledTab = styled.div<{selected?:boolean}>`
+display:inline-block;
+border-radius: 10px 10px 0 0;
+border-width: 1px 1px ${props => props.selected ? "0" : "1px"} 1px;
+border-style: solid;
+border-color: #ccc;
+padding:5px;
+cursor:pointer;
+background-color: ${props => props.selected ? "#ffd580" : ""}
+`
+const TabSelector:React.FC = () => {
+  const leftPanel = useRecoilValue(leftPanelState)
+  return <StyledTabSelector>
+    <StyledTab selected={leftPanel.tab === "objects"}>objects</StyledTab>
+    <StyledTab>trailer</StyledTab>
+  </StyledTabSelector>
+}
+
+const LeftPanelWrapper = styled.div`
+height: calc(100% - ${tabHeight});
+overflow-y:scroll;
+`
 
 const LeftPanel: React.FC = () => {
   const currentDocument = useRecoilValue(currentDocumentState)
@@ -193,10 +227,15 @@ const App: React.FC = () => {
   return (
     <>
       <HalfPanel>
-        <LeftPanel/>
+        <TabSelector/>
+        <LeftPanelWrapper>
+          <LeftPanel/>
+        </LeftPanelWrapper>
       </HalfPanel>
       <HalfPanel>
-        <RightPanel/>
+        <RightPanelWrapper>
+          <RightPanel/>
+        </RightPanelWrapper>
       </HalfPanel>
     </>
   )
