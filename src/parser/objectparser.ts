@@ -22,11 +22,17 @@ export class PdfDict {
 }
 
 export class PdfStream {
+  private readonly buf: ArrayBuffer
   public readonly offset:number
   public readonly dict: PdfDict
-  constructor(offset: number, dict: PdfDict) {
+  constructor(buf: ArrayBuffer, offset: number, dict: PdfDict) {
+    this.buf = buf
     this.offset = offset
     this.dict = dict
+  }
+  getValue(): ArrayBuffer {
+    const length = this.dict.dict["Length"] as number
+    return this.buf.slice(this.offset, this.offset + length)
   }
 }
 export class PdfRef {
@@ -216,7 +222,7 @@ export const parseIndirectObject = (reader:Reader): PdfTopLevelObject => {
     const str = readUntilDelimiter(reader)
     if (str === "stream") {
       reader.skipEOL()
-      return new PdfStream(reader.pos(), result)
+      return new PdfStream(reader.buf, reader.pos(), result)
     } else {
       reader.seek(start)
       return result

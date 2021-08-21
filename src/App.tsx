@@ -2,7 +2,7 @@ import React, {useEffect, useMemo, useState} from "react"
 import { useRecoilState, useRecoilValue } from "recoil"
 import styled from "styled-components"
 import {parse, Document, IndirectObject} from './parser'
-import { PdfArray, PdfDict, PdfName, PdfRef, PdfStream, PdfTopLevelObject } from "./parser/objectparser"
+import { PdfArray, PdfDict, PdfName, PdfObject, PdfRef, PdfStream, PdfTopLevelObject } from "./parser/objectparser"
 import { currentDocumentState, leftPanelState, rightPanelState } from "./states"
 
 
@@ -24,7 +24,12 @@ const Error = styled.div`
 background-color: red;
 `
 
-const ObjectDisplay: React.FC<{object:PdfTopLevelObject, indent?:number, prefix?: string}> = ({object, indent, prefix}) => {
+const ValueField = styled.div`
+background-color: #ccc;
+padding: 5px;
+`
+
+const ObjectDisplayRecursive: React.FC<{object:PdfObject, indent?:number, prefix?: string}> = ({object, indent, prefix}) => {
   const [rightPanel, setRightPanel] = useRecoilState(rightPanelState)
   const currentDocument = useRecoilValue(currentDocumentState)
   prefix = prefix || ""
@@ -36,7 +41,7 @@ const ObjectDisplay: React.FC<{object:PdfTopLevelObject, indent?:number, prefix?
         {prefixed(<>{"{"}</>)}<br/>
         {Object.keys(object.dict).map((key) => (
           <React.Fragment key={key}>
-            <ObjectDisplay object={object.dict[key]} indent={indent+1} prefix={`/${key} `}/>
+            <ObjectDisplayRecursive object={object.dict[key]} indent={indent+1} prefix={`/${key} `}/>
             <br/>
           </React.Fragment>
         ))}
@@ -49,15 +54,13 @@ const ObjectDisplay: React.FC<{object:PdfTopLevelObject, indent?:number, prefix?
         {prefixed(<>[</>)}<br/>
         {object.array.map((obj, idx) => (
           <React.Fragment key={idx}>
-            <ObjectDisplay object={obj} indent={indent+1}/>
+            <ObjectDisplayRecursive object={obj} indent={indent+1}/>
             <br/>
           </React.Fragment>
         ))}
         {<span style={style}>]</span>}<br/>
       </>
     )
-  } else if (object instanceof PdfStream) {
-    return  prefixed(<>{"stream obj offset:" + object.offset}</>)
   } else if (object instanceof PdfName) {
     return prefixed(<>{"/" + object.name}</>)
   } else if (object instanceof PdfRef) {
@@ -70,6 +73,35 @@ const ObjectDisplay: React.FC<{object:PdfTopLevelObject, indent?:number, prefix?
   return prefixed(<>{object}</>)
 }
 
+
+const ObjectDisplay: React.FC<{object:PdfObject}> = ({object}) => {
+  return <ValueField><ObjectDisplayRecursive object={object}/></ValueField>
+}
+
+const StreamDisplay: React.FC<{stream:PdfStream}> = ({stream}) => {
+  const str = useMemo(() => {
+    const buffer = stream.getValue()
+    return String.fromCharCode.apply("", new Uint8Array(buffer))
+  }, [stream])
+  return (
+    <>
+      stream: offset:{stream.offset} dictionary:
+      <br/>
+      <ObjectDisplay object={stream.dict}/>
+      <br/>
+      <ValueField><pre><code>{str}</code></pre></ValueField>
+    </>
+  )
+}
+
+const TopLevelObjectDisplay:React.FC<{object: PdfTopLevelObject}> = ({object}) => {
+  if (object instanceof PdfStream) {
+    return <StreamDisplay stream={object}/>
+  } else {
+    return <ObjectDisplay object={object} />
+  }
+}
+
 const ErrorDisplay: React.FC<{message:string}> = ({message}) => {
   return <Error>{message}</Error>
 }
@@ -80,7 +112,7 @@ const RightPanel: React.FC = () => {
     if (rightPanel.state === "object") {
       try {
         const value = rightPanel.object.getValue()
-        return <ObjectDisplay object={value}/>
+        return <TopLevelObjectDisplay object={value}/>
       } catch(e) {
         return <ErrorDisplay message={e.message}/>
       }

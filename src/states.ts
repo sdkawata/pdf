@@ -1,6 +1,5 @@
 import { atom } from "recoil";
 import {Document, IndirectObject} from "./parser"
-import { PdfTopLevelObject } from "./parser/objectparser";
 
 export type LeftPanelStateType = {
   tab: "objects"

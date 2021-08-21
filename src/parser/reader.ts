@@ -3,9 +3,9 @@ export const bufToString = (buf: ArrayBuffer, start:number, length:number): stri
 }
 
 export class Reader {
-  private buf: ArrayBuffer;
+  public readonly buf: ArrayBuffer;
   private current: number = 0;
-  private view: Uint8Array
+  private readonly view: Uint8Array
   constructor(buf:ArrayBuffer, offset:number = 0) {
     this.buf = buf
     this.current = offset
