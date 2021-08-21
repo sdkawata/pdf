@@ -45,7 +45,7 @@ const ObjectDisplayRecursive: React.FC<{object:PdfObject, indent?:number, prefix
             <br/>
           </React.Fragment>
         ))}
-        {prefixed(<span style={style}>{"}"}</span>)}<br/>
+        {<span style={style}>{"}"}</span>}
       </>
     )
   } else if (object instanceof PdfArray) {
@@ -58,7 +58,7 @@ const ObjectDisplayRecursive: React.FC<{object:PdfObject, indent?:number, prefix
             <br/>
           </React.Fragment>
         ))}
-        {<span style={style}>]</span>}<br/>
+        {<span style={style}>]</span>}
       </>
     )
   } else if (object instanceof PdfName) {
