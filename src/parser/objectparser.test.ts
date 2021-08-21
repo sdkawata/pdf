@@ -1,9 +1,10 @@
-import {parsePdfObject, PdfArray, PdfDict, PdfName, PdfObject, PdfRef} from "./"
+import {parseIndirectObject, parseObject, PdfArray, PdfDict, PdfName, PdfObject, PdfRef, PdfStream} from "./objectparser"
+import { Reader } from "./reader"
 
 describe("parsePdfObject", () => {
   const parseString = (string) => {
     const buffer = Buffer.from(string)
-    return parsePdfObject(buffer, 0)
+    return parseObject(new Reader(buffer, 0))
   }
   const expectToBeName = (object: PdfObject, name: string) => {
     expect(object).toBeInstanceOf(PdfName)
@@ -36,7 +37,7 @@ describe("parsePdfObject", () => {
     expectToBeRef(parseString("6 0 R"), 6, 0)
   })
   it("should parse dict", () => {
-    const value = parseString('<</a 1 /b (abc) /c <</d 1 /c 3>> >>')
+    const value = parseString('<</a 1/b (abc)/c <</d 1 /c 3>> >>')
     expect(value).toBeInstanceOf(PdfDict)
     const dict = (value as PdfDict).dict
     expect(dict['a']).toBe(1)
@@ -50,5 +51,30 @@ describe("parsePdfObject", () => {
     expect(array[0]).toBe(1)
     expect(array[1]).toBeInstanceOf(PdfArray)
     expect(array[2]).toBe("abc")
+  })
+})
+
+
+describe("parseIndirectObject", () => {
+  const parseString = (string) => {
+    const buffer = Buffer.from(string)
+    return parseIndirectObject(new Reader(buffer, 0))
+  }
+  it("should parse indirect object", () => {
+    const result = parseString("1 0 obj\n1\nendobj")
+    expect(result).toBe(1)
+  })
+  it("should parse indirect object with dict", () => {
+    const result = parseString("1 0 obj\n<</a 1>>\nendobj")
+    expect(result).toBeInstanceOf(PdfDict)
+    const dict = (result as PdfDict).dict
+    expect(dict["a"]).toBe(1)
+  })
+  it("should parse stream", () => {
+    const result = parseString("1 0 obj\n<</Length 1>>\nstream\n1\nendstream\nendobj")
+    expect(result).toBeInstanceOf(PdfStream)
+    const stream = result as PdfStream
+    expect(stream.dict.dict["Length"]).toBe(1)
+    expect(stream.offset).toBe("1 0 obj\n<</Length 1>>\nstream\n".length)
   })
 })
