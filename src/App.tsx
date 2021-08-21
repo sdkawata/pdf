@@ -25,6 +25,8 @@ background-color: red;
 `
 
 const ObjectDisplay: React.FC<{object:PdfTopLevelObject, indent?:number, prefix?: string}> = ({object, indent, prefix}) => {
+  const [rightPanel, setRightPanel] = useRecoilState(rightPanelState)
+  const currentDocument = useRecoilValue(currentDocumentState)
   prefix = prefix || ""
   indent = indent || 0
   const style={marginLeft: `${indent*10}px`}
@@ -59,7 +61,11 @@ const ObjectDisplay: React.FC<{object:PdfTopLevelObject, indent?:number, prefix?
   } else if (object instanceof PdfName) {
     return prefixed(<>{"/" + object.name}</>)
   } else if (object instanceof PdfRef) {
-    return prefixed(<>{"ref:" + object.objNumber + " " + object.gen}</>)
+    const onClick = (e) => {
+      e.preventDefault()
+      setRightPanel({state: "object", object: currentDocument.getTableEntry(object.objNumber)})
+    }
+    return prefixed(<a href={"./"} onClick={onClick}>{"ref:" + object.objNumber + " " + object.gen}</a>)
   }
   return prefixed(<>{object}</>)
 }
