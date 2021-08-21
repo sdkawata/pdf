@@ -22,6 +22,7 @@ describe("parsePdfObject", () => {
   })
   it("should parse float", () => {
     expect(parseString("1.25")).toBe(1.25)
+    expect(parseString(".25")).toBe(.25)
   })
   it("should parse string", () => {
     expect(parseString("(Hello, World!)")).toBe("Hello, World!")
@@ -62,7 +63,7 @@ describe("parsePdfObject", () => {
     const dict = (value as PdfDict).dict
     expectToBeName(dict['a'], 'b')
   })
-  it.only("should parse array ending name with no space", () => {
+  it("should parse array ending name with no space", () => {
     const value = parseString(`[/a /b]`)
     expect(value).toBeInstanceOf(PdfArray)
     const array = (value as PdfArray).array

@@ -182,7 +182,7 @@ const parseArray = (reader: Reader): PdfArray => {
 export const parseObject = (reader:Reader):PdfObject => {
   reader.skipSpace()
   const peeked = reader.peek()
-  if (isDigit(peeked) || peeked === 0x2d) {
+  if (isDigit(peeked) || peeked === 0x2d || peeked === 0x2e) {
     return tryParseNumberOrRef(reader)
   } else if (peeked === 0x28) {
     return parseString(reader)
