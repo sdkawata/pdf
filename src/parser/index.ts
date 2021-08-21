@@ -1,3 +1,4 @@
+import { parseIndirectObject, PdfTopLevelObject } from "./objectparser"
 import {bufToString, Reader} from "./reader"
 
 
@@ -20,6 +21,9 @@ export class TableEntry {
     this.buf = buf
     this.offset = offset
     this.gen = gen
+  }
+  getValue(): PdfTopLevelObject {
+    return parseIndirectObject(new Reader(this.buf, this.offset))
   }
 }
 
@@ -72,11 +76,6 @@ export class Document {
   }
 }
 
-
-
-
-
 export const parse = async (buf:ArrayBuffer): Promise<Document> => {
-  console.log(1)
   return new Document(buf)
 }
