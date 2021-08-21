@@ -3,20 +3,13 @@ import styled from "styled-components"
 import {parse, Document, IndirectObject} from './parser'
 import { PdfArray, PdfDict, PdfName, PdfRef, PdfStream, PdfTopLevelObject } from "./parser/objectparser"
 
-const Base = styled.div`
-max-width: 100%;
-max-height: 100%;
-display: flex;
-flex-wrap:wrap;
-overflow:hidden;
-`
 
 const HalfPanel = styled.div`
 width: calc(50% - 4px);
 margin: 2px;
 border: 1px solid #eee;
 box-shadow: 1px 1px 1px #eee;
-max-height: 100%;
+height: 100%;
 overflow-y: scroll;
 `
 
@@ -83,16 +76,18 @@ const App: React.FC = () => {
   const showObject = (object:IndirectObject) => {
     setLeftInfo(<ObjectDisplay object={object}/>)
   }
-  return (<Base>
-    <HalfPanel>
-      {pdfObjects.map((object,index) => {
-        return <ObjectRow key={index} onClick={() => object ? showObject(object) : null}>index:{index} {object ? <>gen:{object.gen} offset:{object.offset}</> : <></>}</ObjectRow>
-      })}
-    </HalfPanel>
-    <HalfPanel>
-      <>{leftInfo}</>
-    </HalfPanel>
-  </Base>)
+  return (
+    <>
+      <HalfPanel>
+        {pdfObjects.map((object,index) => {
+          return <ObjectRow key={index} onClick={() => object ? showObject(object) : null}>index:{index} {object ? <>gen:{object.gen} offset:{object.offset}</> : <></>}</ObjectRow>
+        })}
+      </HalfPanel>
+      <HalfPanel>
+        <>{leftInfo}</>
+      </HalfPanel>
+    </>
+  )
 }
 
 export default App
