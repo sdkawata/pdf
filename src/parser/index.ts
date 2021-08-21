@@ -13,7 +13,7 @@ const checkEof = (reader:Reader) => {
     throw new Error("EOF string not found")
   }
 }
-export class TableEntry {
+export class IndirectObject {
   private readonly buf:ArrayBuffer
   public readonly offset:number
   public readonly gen:number
@@ -63,15 +63,15 @@ export class Document {
   getTableOffset(): number {
     return this.tableOffset
   }
-  getTableEntry(index: number): TableEntry | null {
+  getTableEntry(index: number): IndirectObject | null {
     if (index === 0) {
       return null
     }
     const line = bufToString(this.buf, this.tableEntryOffset + index * this.tableEntryLength, this.tableEntryLength)
     const [offset, gen] = line.split(" ")
-    return new TableEntry(this.buf, Number(offset), Number(gen))
+    return new IndirectObject(this.buf, Number(offset), Number(gen))
   }
-  getTableEntries(): (TableEntry | null)[] {
+  getTableEntries(): (IndirectObject | null)[] {
     return [...Array(this.tableLength).keys()].map((k) => this.getTableEntry(k))
   }
 }
