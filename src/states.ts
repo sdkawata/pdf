@@ -1,5 +1,5 @@
 import { atom } from "recoil";
-import {Document} from "./parser"
+import {Document, IndirectObject} from "./parser"
 import { PdfTopLevelObject } from "./parser/objectparser";
 
 export type LeftPanelStateType = {
@@ -13,12 +13,9 @@ export const leftPanelState = atom<LeftPanelStateType>({
 
 export type RightPanelStateType = {
   state: "object",
-  value: PdfTopLevelObject,
+  object: IndirectObject,
 } | {
   state: "none",
-} | {
-  state: "error",
-  message: string,
 }
 
 export const rightPanelState = atom<RightPanelStateType>({

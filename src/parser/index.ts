@@ -16,9 +16,11 @@ const checkEof = (reader:Reader) => {
 export class IndirectObject {
   private readonly buf:ArrayBuffer
   public readonly offset:number
+  public readonly index: number
   public readonly gen:number
-  constructor(buf:ArrayBuffer, offset:number,gen:number) {
+  constructor(buf:ArrayBuffer, index:number, offset:number,gen:number) {
     this.buf = buf
+    this.index = index
     this.offset = offset
     this.gen = gen
   }
@@ -69,7 +71,7 @@ export class Document {
     }
     const line = bufToString(this.buf, this.tableEntryOffset + index * this.tableEntryLength, this.tableEntryLength)
     const [offset, gen] = line.split(" ")
-    return new IndirectObject(this.buf, Number(offset), Number(gen))
+    return new IndirectObject(this.buf, index, Number(offset), Number(gen))
   }
   getTableEntries(): (IndirectObject | null)[] {
     return [...Array(this.tableLength).keys()].map((k) => this.getTableEntry(k))

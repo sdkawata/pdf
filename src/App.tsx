@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from "react"
+import React, {useEffect, useMemo, useState} from "react"
 import { useRecoilState, useRecoilValue } from "recoil"
 import styled from "styled-components"
 import {parse, Document, IndirectObject} from './parser'
@@ -15,8 +15,9 @@ height: 100%;
 overflow-y: scroll;
 `
 
-const ObjectRow = styled.div`
+const ObjectRow = styled.div<{selected?:boolean}>`
 cursor: pointer;
+background-color: ${props => props.selected ? "#ccc": "white"}
 `
 
 const Error = styled.div`
@@ -69,10 +70,20 @@ const ErrorDisplay: React.FC<{message:string}> = ({message}) => {
 
 const RightPanel: React.FC = () => {
   const rightPanel = useRecoilValue(rightPanelState)
-  if (rightPanel.state === "object") {
-    return <ObjectDisplay object={rightPanel.value}/>
-  } else if (rightPanel.state === "error") {
-    return <ErrorDisplay message={rightPanel.message}/>
+  const objectPanel =useMemo(() => {
+    if (rightPanel.state === "object") {
+      try {
+        const value = rightPanel.object.getValue()
+        return <ObjectDisplay object={value}/>
+      } catch(e) {
+        return <ErrorDisplay message={e.message}/>
+      }
+    } else {
+      return null
+    }
+  }, [rightPanel])
+  if (objectPanel) {
+    return objectPanel;
   }
   return <></>
 }
@@ -85,19 +96,20 @@ const LeftPanel: React.FC = () => {
     if (object === null) {
       return
     }
-    try {
-      const value = object.getValue()
-      setRightPanel({state: "object", value})
-    } catch (e) {
-      setRightPanel({state: "error", message: e.message})
-    }
+    setRightPanel({state: "object", object})
   }
   if (currentDocument) {
     const pdfObjects = currentDocument.getTableEntries()
     return (
       <>
         {pdfObjects.map((object,index) => {
-          return <ObjectRow key={index} onClick={() => showObject(object)}>index:{index} {object ? <>gen:{object.gen} offset:{object.offset}</> : <></>}</ObjectRow>
+          return <ObjectRow
+            selected={rightPanel.state==="object" && rightPanel.object.index === index}
+            key={index}
+            onClick={() => showObject(object)}
+          >
+            index:{index} {object ? <>gen:{object.gen} offset:{object.offset}</> : <></>}
+          </ObjectRow>
         })}
       </>
     )
@@ -108,6 +120,7 @@ const LeftPanel: React.FC = () => {
 
 const App: React.FC = () => {
   const [currentDocument, setCurrentDocument] = useRecoilState(currentDocumentState)
+  const [rightPanel, setRightPanel] = useRecoilState(rightPanelState)
   useEffect(() => {
     const dragOverListener = (e:DragEvent) => {
       e.preventDefault()
@@ -128,6 +141,7 @@ const App: React.FC = () => {
       }) as ArrayBuffer
       const pdfDocument = await parse(arrayBuffer)
       setCurrentDocument(pdfDocument)
+      setRightPanel({state: "none"})
     }
     document.body.addEventListener('dragover', dragOverListener)
     document.body.addEventListener('dragenter', dragEnterListener)
