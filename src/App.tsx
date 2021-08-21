@@ -1,7 +1,9 @@
 import React, {useEffect, useState} from "react"
+import { useRecoilState, useRecoilValue } from "recoil"
 import styled from "styled-components"
 import {parse, Document, IndirectObject} from './parser'
 import { PdfArray, PdfDict, PdfName, PdfRef, PdfStream, PdfTopLevelObject } from "./parser/objectparser"
+import { currentDocumentState, leftPanelState, rightPanelState } from "./states"
 
 
 const HalfPanel = styled.div`
@@ -65,10 +67,47 @@ const ErrorDisplay: React.FC<{message:string}> = ({message}) => {
   return <Error>{message}</Error>
 }
 
+const RightPanel: React.FC = () => {
+  const rightPanel = useRecoilValue(rightPanelState)
+  if (rightPanel.state === "object") {
+    return <ObjectDisplay object={rightPanel.value}/>
+  } else if (rightPanel.state === "error") {
+    return <ErrorDisplay message={rightPanel.message}/>
+  }
+  return <></>
+}
+
+const LeftPanel: React.FC = () => {
+  const currentDocument = useRecoilValue(currentDocumentState)
+  const leftPanel = useRecoilValue(leftPanelState)
+  const [rightPanel, setRightPanel] = useRecoilState(rightPanelState)
+  const showObject = (object: IndirectObject | null) => {
+    if (object === null) {
+      return
+    }
+    try {
+      const value = object.getValue()
+      setRightPanel({state: "object", value})
+    } catch (e) {
+      setRightPanel({state: "error", message: e.message})
+    }
+  }
+  if (currentDocument) {
+    const pdfObjects = currentDocument.getTableEntries()
+    return (
+      <>
+        {pdfObjects.map((object,index) => {
+          return <ObjectRow key={index} onClick={() => showObject(object)}>index:{index} {object ? <>gen:{object.gen} offset:{object.offset}</> : <></>}</ObjectRow>
+        })}
+      </>
+    )
+  } else {
+    return <>waiting for file. drag and drop pdf...</>
+  }
+}
+
 const App: React.FC = () => {
-  const [pdfDocument, setPdfDocument] = useState<Document | null>(null)
-  const [pdfObjects, setPdfObjects] = useState<(IndirectObject | null)[]>([])
-  const [leftInfo, setLeftInfo] = useState<React.ReactElement | null>(null);
+  const [currentDocument, setCurrentDocument] = useRecoilState(currentDocumentState)
   useEffect(() => {
     const dragOverListener = (e:DragEvent) => {
       e.preventDefault()
@@ -88,8 +127,7 @@ const App: React.FC = () => {
         reader.readAsArrayBuffer(file)
       }) as ArrayBuffer
       const pdfDocument = await parse(arrayBuffer)
-      setPdfDocument(pdfDocument)
-      setPdfObjects(pdfDocument.getTableEntries())
+      setCurrentDocument(pdfDocument)
     }
     document.body.addEventListener('dragover', dragOverListener)
     document.body.addEventListener('dragenter', dragEnterListener)
@@ -100,23 +138,13 @@ const App: React.FC = () => {
       document.body.removeEventListener('drop', dropListener)
     }
   }, [])
-  const showObject = (object:IndirectObject) => {
-    try {
-      const value = object.getValue()
-      setLeftInfo(<ObjectDisplay object={value}/>)
-    } catch (e) {
-      setLeftInfo(<ErrorDisplay message={e.message}/>)
-    }
-  }
   return (
     <>
       <HalfPanel>
-        {pdfObjects.map((object,index) => {
-          return <ObjectRow key={index} onClick={() => object ? showObject(object) : null}>index:{index} {object ? <>gen:{object.gen} offset:{object.offset}</> : <></>}</ObjectRow>
-        })}
+        <LeftPanel/>
       </HalfPanel>
       <HalfPanel>
-        <>{leftInfo}</>
+        <RightPanel/>
       </HalfPanel>
     </>
   )
