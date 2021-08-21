@@ -62,6 +62,13 @@ describe("parsePdfObject", () => {
     const dict = (value as PdfDict).dict
     expectToBeName(dict['a'], 'b')
   })
+  it.only("should parse array ending name with no space", () => {
+    const value = parseString(`[/a /b]`)
+    expect(value).toBeInstanceOf(PdfArray)
+    const array = (value as PdfArray).array
+    expectToBeName(array[0], "a")
+    expectToBeName(array[1], "b")
+  })
 })
 
 
