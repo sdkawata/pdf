@@ -52,7 +52,7 @@ const isDigit = (i:number) => i >= 0x30 && i <= 0x39
 
 const parseNumber = (reader:Reader): number => {
   let str = String.fromCharCode(reader.readOne())
-  while (!reader.outOfBounds()  && isDigit(reader.peek())) {
+  while (!reader.outOfBounds()  && (isDigit(reader.peek()) || reader.peek() === 0x2e)) {
     str += String.fromCharCode(reader.readOne())
   }
   return Number(str)
@@ -109,6 +109,7 @@ const isDelimiter  = (n:number) =>
   n === 0x0a || //lf
   n === 0x2f || // /
   n === 0x3c || // <
+  n === 0x3e || // >
   n === 0x5b    // [
 const parseName = (reader:Reader): PdfName => {
   let str = ""
