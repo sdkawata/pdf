@@ -20,26 +20,45 @@ cursor: pointer;
 const Error = styled.div`
 background-color: red;
 `
-const asJsObject = (object:PdfTopLevelObject): any => {
+
+const ObjectDisplay: React.FC<{object:PdfTopLevelObject, indent?:number, prefix?: string}> = ({object, indent, prefix}) => {
+  prefix = prefix || ""
+  indent = indent || 0
+  const style={marginLeft: `${indent*10}px`}
+  const prefixed = (e: React.ReactElement) => <span style={style}>{prefix}{e}</span>
   if (object instanceof PdfDict) {
-    const ret = {}
-    Object.keys(object.dict).map((key) => {
-      ret[key] = asJsObject(object.dict[key])
-    })
-    return ret
+    return (<>
+        {prefixed(<>{"{"}</>)}<br/>
+        {Object.keys(object.dict).map((key) => (
+          <React.Fragment key={key}>
+            <ObjectDisplay object={object.dict[key]} indent={indent+1} prefix={`/${key} `}/>
+            <br/>
+          </React.Fragment>
+        ))}
+        {prefixed(<span style={style}>{"}"}</span>)}<br/>
+      </>
+    )
   } else if (object instanceof PdfArray) {
-    return object.array.map((o) => asJsObject(o))
+    return (
+      <>
+        {prefixed(<>[</>)}<br/>
+        {object.array.map((obj, idx) => (
+          <React.Fragment key={idx}>
+            <ObjectDisplay object={obj} indent={indent+1}/>
+            <br/>
+          </React.Fragment>
+        ))}
+        {<span style={style}>]</span>}<br/>
+      </>
+    )
   } else if (object instanceof PdfStream) {
-    return "stream obj offset:" + object.offset
+    return  prefixed(<>{"stream obj offset:" + object.offset}</>)
   } else if (object instanceof PdfName) {
-    return "name:" + object.name
+    return prefixed(<>{"/" + object.name}</>)
   } else if (object instanceof PdfRef) {
-    return "ref:" + object.objNumber + " " + object.gen
+    return prefixed(<>{"ref:" + object.objNumber + " " + object.gen}</>)
   }
-  return object
-}
-const ObjectDisplay: React.FC<{object:PdfTopLevelObject}> = ({object}) => {
-  return <pre><code>{JSON.stringify(asJsObject(object), null, "  ")}</code></pre>
+  return prefixed(<>{object}</>)
 }
 
 const ErrorDisplay: React.FC<{message:string}> = ({message}) => {
