@@ -15,6 +15,13 @@ list-style: none;
 margin: 0 0 0 15px;
 `
 
+const ObjectListLine = styled.div<{openable?:boolean}>`
+${props => props.openable ? "cursor:pointer;" : ""}
+&:hover {
+  background-color: #ffeccc;
+}
+`
+
 const OpenIcon = styled.span<{opened:boolean}>`
 width: 0px;
 display: inline-block;
@@ -22,15 +29,17 @@ position: relative;
 &:before {
   position: absolute;
   display: block;
-  content: ">";
+  content: ${props => props.opened ? "'-'" : "'+'"};
   top: -14px;
   left: -15px;
   font-size: 12px;
   font-weight:bold;
-  ${props => props.opened ? "transform:rotate(90deg);" : ""}
   cursor: pointer;
 }
 }
+`;
+const ErrorLine = styled.div`
+background-color: pink;
 `;
 const TreeRecursive: React.FC<{object:PdfTopLevelObject, prefix: React.ReactElement, defaultOpened?:boolean}> = ({
   object,prefix,defaultOpened = false
@@ -38,10 +47,13 @@ const TreeRecursive: React.FC<{object:PdfTopLevelObject, prefix: React.ReactElem
   const [opened, setOpened] = useState(defaultOpened)
   const [rightPanel, setRightPanel] = useRecoilState(rightPanelState)
   const currentDocument = useRecoilValue(currentDocumentState)
-  const prefixed = (e: React.ReactElement, openable:boolean = false) => (<>
+  const prefixed = (e: React.ReactElement, openable:boolean = false, children?: React.ReactElement) => (<>
     <ObjectListItem openable={openable}>
-      {openable ? <OpenIcon opened={opened} onClick={() => setOpened(b => !b)}/> : <></>}
-      {prefix}{e}
+      <ObjectListLine onClick={() => setOpened(b => !b)} openable={openable}>
+        {openable ? <OpenIcon opened={opened}/> : <></>}
+        {prefix}{e}
+      </ObjectListLine>
+      {children}
     </ObjectListItem>
   </>)
   if (object instanceof PdfDict) {
@@ -50,11 +62,11 @@ const TreeRecursive: React.FC<{object:PdfTopLevelObject, prefix: React.ReactElem
       .map(([key, value]) => (
         <TreeRecursive key={key} object={value} prefix={<>{"/" + key + " "}</>} defaultOpened={true}/>
       ))
-      return prefixed(<>
+      return prefixed(<></>,true, <>
         <ObjectList>
           {children}
         </ObjectList>
-      </>, true)
+      </>)
     } else {
       return prefixed(<>{"{dict}"}</>, true)
     }
@@ -64,11 +76,11 @@ const TreeRecursive: React.FC<{object:PdfTopLevelObject, prefix: React.ReactElem
       .map((value, idx) => (
         <TreeRecursive key={idx} object={value} prefix={<></>} defaultOpened={true}/>
       ))
-      return prefixed(<>
+      return prefixed(<></>, true, <>
         <ObjectList>
           {children}
         </ObjectList>
-      </>, true)
+      </>)
     } else {
       return prefixed(<>{"[array]"}</>, true)
     }
@@ -79,12 +91,16 @@ const TreeRecursive: React.FC<{object:PdfTopLevelObject, prefix: React.ReactElem
       e.preventDefault()
       setRightPanel({state: "object", object: currentDocument.getTableEntry(object.objNumber)})
     }
-    const value = currentDocument.getTableEntry(object.objNumber).getValue()
-    return <TreeRecursive
-      object={value}
-      prefix={<>{prefix}<a href="./" onClick={onClick}>{`ref ${object.objNumber}`}</a>{" "}</>}
-      defaultOpened={false}
-    />
+    try {
+      const value = currentDocument.getTableEntry(object.objNumber).getValue()
+      return <TreeRecursive
+        object={value}
+        prefix={<>{prefix}<a href="./" onClick={onClick}>{`ref ${object.objNumber}`}</a>{" "}</>}
+        defaultOpened={false}
+      />
+    } catch (e) {
+      return <ObjectListItem><ErrorLine>{e.message}</ErrorLine></ObjectListItem>
+    }
   } else if (object instanceof PdfStream) {
     return prefixed(<>stream</>)
   }
