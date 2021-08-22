@@ -6,6 +6,8 @@ import styled from "styled-components"
 import ObjectTree from "./ObjectTree"
 import Pako from "pako"
 
+const DISPLAY_THRESHOLD = 10000
+
 const StyledError = styled.div`
 background-color: red;
 `
@@ -65,7 +67,7 @@ const StreamDisplay: React.FC<{stream:PdfStream}> = ({stream}) => {
     }
   }, [imageUrl])
   const length = stream.getLength(getter)
-  const displayed = length < 10000
+  const displayed = length < DISPLAY_THRESHOLD
   let errors : string[] = []
   const download = (e:React.MouseEvent) => {
     // cf: https://stackoverflow.com/questions/19327749/javascript-blob-filename-without-link
@@ -134,7 +136,11 @@ const StreamDisplay: React.FC<{stream:PdfStream}> = ({stream}) => {
   }
   let {info, str} = displayed ? (() => {
     try {
+      console.log(displayed)
       let {info, buf} = tryDefilter(getter, stream)
+      if (buf.byteLength >= DISPLAY_THRESHOLD) {
+        return {info: "", str: ""}
+      }
       return {info, str: String.fromCharCode.apply("", new Uint8Array(buf))}
     } catch (e) {
       console.log(e)
