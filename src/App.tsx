@@ -39,9 +39,14 @@ const App: React.FC = () => {
         })
         reader.readAsArrayBuffer(file)
       }) as ArrayBuffer
-      const pdfDocument = parse(arrayBuffer)
-      setCurrentDocument(pdfDocument)
-      setRightPanel({state: "none"})
+      try {
+        const pdfDocument = parse(arrayBuffer)
+        setCurrentDocument(pdfDocument)
+        setRightPanel({state: "none"})
+      } catch (e) {
+        console.log(e)
+        alert(e.message)
+      }
     }
     document.body.addEventListener('dragover', dragOverListener)
     document.body.addEventListener('dragenter', dragEnterListener)
