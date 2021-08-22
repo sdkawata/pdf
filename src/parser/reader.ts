@@ -51,6 +51,9 @@ export class Reader {
   seek(ptr:number) {
     this.current = ptr
   }
+  advance(offset:number) {
+    this.current += offset
+  }
   seekToLast() {
     this.current = this.buf.byteLength - 1
   }

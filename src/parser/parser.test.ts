@@ -1,6 +1,7 @@
 import { Document } from "."
 import {readFileSync} from "fs"
 import {join} from "path"
+import { PdfDict } from "./objectparser"
 
 describe('parser', () => {
   const file = readFileSync(join(__dirname, "./fixture/simple.pdf"))
@@ -27,5 +28,9 @@ describe('parser', () => {
     entries[3].getValue()
     entries[4].getValue()
     entries[5].getValue()
+  })
+  it('should parse trailer', () => {
+    expect(document.trailer).toBeInstanceOf(PdfDict)
+    expect(document.trailer.dict["Size"]).toBe(6)
   })
 })

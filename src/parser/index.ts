@@ -1,4 +1,4 @@
-import { parseIndirectObject, PdfTopLevelObject } from "./objectparser"
+import { parseIndirectObject, parseObject, PdfDict, PdfTopLevelObject } from "./objectparser"
 import {bufToString, Reader} from "./reader"
 
 
@@ -37,13 +37,34 @@ export class Document {
   public readonly indexOffset: number
   public readonly tableLength: number
   public readonly tableEntryLength: number
+  public readonly trailer: PdfDict
   constructor(buf:ArrayBuffer) {
+    this.buf = buf
     const reader = new Reader(buf)
     this.header = checkHeader(reader)
     reader.seekToLast()
     checkEof(reader)
     const tableOffset = Number(reader.reverseReadStringUntilEOL())
-    this.buf = buf
+
+    // find trailer
+    while(true) {
+      reader.reverseSkipEOL()
+      const str = reader.reverseReadStringUntilEOL()
+      if (str === "trailer") {
+        break
+      }
+    }
+    reader.advance(1)
+    reader.readLine()
+    reader.skipEOL()
+    const trailer = parseObject(reader)
+    if (trailer instanceof PdfDict) {
+      this.trailer = trailer
+    } else {
+      throw new Error("trailer is not dict")
+    }
+
+    // parse cross-reference table
     this.tableOffset = tableOffset
     reader.seek(this.tableOffset)
     reader.readLine() // skip xref
