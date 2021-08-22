@@ -62,9 +62,9 @@ position: relative;
   position: absolute;
   display: block;
   content: ">";
-  top: -16px;
+  top: -14px;
   left: -15px;
-  font-size: 15px;
+  font-size: 12px;
   font-weight:bold;
   ${props => props.opened ? "transform:rotate(90deg);" : ""}
   cursor: pointer;
