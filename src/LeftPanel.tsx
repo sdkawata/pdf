@@ -46,6 +46,7 @@ overflow-y:scroll;
 
 const ObjectList = styled.ul`
 list-style: none;
+margin: 0 0 0 15px;
 padding: 0;
 `
 const ObjectListItem = styled.li`
@@ -55,8 +56,7 @@ const TreeRecursive: React.FC<{object:PdfTopLevelObject, prefix: string, indent:
   object,prefix,indent
 }) => {
   const currentDocument = useRecoilValue(currentDocumentState)
-  const style={marginLeft: `${indent*10}px`}
-  const prefixed = (e: React.ReactElement) => <span style={style}>{prefix}{e}</span>
+  const prefixed = (e: React.ReactElement) => <span>{prefix}{e}</span>
   if (object instanceof PdfDict) {
     const children = Array.from(object.dict.entries())
       .filter(([key, value]) => value instanceof PdfRef)
@@ -68,10 +68,10 @@ const TreeRecursive: React.FC<{object:PdfTopLevelObject, prefix: string, indent:
     if (children.length > 0) {
       return (
         <div>
-          <ObjectList>
             <ObjectListItem>{prefixed(<></>)}</ObjectListItem>
-            {children}
-          </ObjectList>
+            <ObjectList>
+              {children}
+            </ObjectList>
         </div>
       )
     } else {
