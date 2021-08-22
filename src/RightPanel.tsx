@@ -109,10 +109,10 @@ const StreamDisplay: React.FC<{stream:PdfStream}> = ({stream}) => {
         }
       }
       context.putImageData(data,0,0)
-      console.log(data)
       setShowCanvas(true)
     } catch (e) {
       console.log(e)
+      alert(e.message)
     }
   }
   let {info, str} = displayed ? (() => {
@@ -122,6 +122,7 @@ const StreamDisplay: React.FC<{stream:PdfStream}> = ({stream}) => {
     } catch (e) {
       console.log(e)
       errors.push(e.message)
+      alert(e.message)
       return {info: "", str: ""}
     }
   })() : {info:"", str: ""}
@@ -173,7 +174,7 @@ const Panel: React.FC = () => {
         return (
           <>
             <div>objNumber: {objectNumber} gen:{gen} offset: {object.offset}</div>
-            <TopLevelObjectDisplay object={value}/>
+            <TopLevelObjectDisplay object={value} key={`${objectNumber}-${gen}`}/>
           </>
         )
       } catch(e) {
