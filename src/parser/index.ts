@@ -29,7 +29,7 @@ export class IndirectObject {
   }
 }
 
-export class Document {
+export class PdfDocument {
   private readonly buf: ArrayBuffer
   public readonly tableOffset: number
   public readonly tableEntryOffset: number
@@ -106,6 +106,6 @@ export class Document {
   }
 }
 
-export const parse = (buf:ArrayBuffer): Document => {
-  return new Document(buf)
+export const parse = (buf:ArrayBuffer): PdfDocument => {
+  return new PdfDocument(buf)
 }

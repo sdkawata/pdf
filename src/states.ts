@@ -1,5 +1,5 @@
 import { atom } from "recoil";
-import {Document, IndirectObject} from "./parser"
+import {PdfDocument, IndirectObject} from "./parser"
 
 export type LeftPanelStateType = {
   tab: "objects"
@@ -24,7 +24,7 @@ export const rightPanelState = atom<RightPanelStateType>({
   default: {state: "none"}
 })
 
-export const currentDocumentState = atom<Document | null>({
+export const currentDocumentState = atom<PdfDocument | null>({
   key: "currentDocument",
   default: null,
 })

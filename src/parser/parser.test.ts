@@ -1,11 +1,11 @@
-import { Document } from "."
+import { PdfDocument } from "."
 import {readFileSync} from "fs"
 import {join} from "path"
 import { PdfDict } from "./objectparser"
 
 describe('parser', () => {
   const file = readFileSync(join(__dirname, "./fixture/simple.pdf"))
-  const document = new Document(file)
+  const document = new PdfDocument(file)
   it('should parse', () => {
     expect(document.getHeader()).toBe("%PDF-1.0")
     expect(document.getTableOffset()).toBe(444)
