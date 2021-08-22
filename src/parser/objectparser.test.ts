@@ -73,6 +73,9 @@ describe("parsePdfObject", () => {
   it("should parse string", () => {
     expect(parseString("<414243>")).toBe("ABC")
   })
+  it("should parse null", () => {
+    expect(parseString("null")).toBe(null)
+  })
 })
 
 

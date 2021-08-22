@@ -137,6 +137,15 @@ const parseBool = (reader:Reader): boolean => {
   }
 }
 
+const parseNull = (reader:Reader): null => {
+  const str = readUntilDelimiter(reader)
+  if (str === "null") {
+    return null
+  } else {
+    throw new Error("unprocessable value " + str )
+  }
+}
+
 const parseDict = (reader: Reader): PdfDict => {
   if (reader.readChar() !== '<') {
     throw new Error('unexpected token expect <')
@@ -203,6 +212,8 @@ export const parseObject = (reader:Reader):PdfObject => {
     return parseName(reader)
   } else if (peeked === 0x74 || peeked === 0x66) {
     return parseBool(reader)
+  } else if (peeked === 0x6e) {
+    return parseNull(reader)
   } else if (peeked === 0x3c) {
     if (reader.peek(1) === 0x3c) {
       return parseDict(reader)
