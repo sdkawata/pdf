@@ -1,3 +1,4 @@
+import { PdfDocument } from "."
 import { Reader } from "./reader"
 
 export class PdfName {
@@ -30,8 +31,27 @@ export class PdfStream {
     this.offset = offset
     this.dict = dict
   }
-  getValue(): ArrayBuffer {
-    const length = this.dict.dict.get("Length") as number
+  getLength(getter?:(objNumber:number, gen:number) => PdfTopLevelObject): number {
+    const length = this.dict.dict.get("Length")
+    if (length instanceof PdfRef) {
+      if (getter) {
+        const value = getter(length.objNumber, length.gen)
+        if (typeof value === "number") {
+          return value
+        } else {
+          throw new Error("illegal length type")
+        }
+      } else {
+        throw new Error("length is ref and document not given")
+      }
+    } else if (typeof length === "number") {
+      return length
+    } else {
+      throw new Error("illegal length type")
+    }
+  }
+  getValue(getter?:(objNumber:number, gen:number) => PdfTopLevelObject): ArrayBuffer {
+    const length = this.getLength(getter)
     return this.buf.slice(this.offset, this.offset + length)
   }
 }

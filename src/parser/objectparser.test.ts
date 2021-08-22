@@ -105,4 +105,15 @@ describe("parseIndirectObject", () => {
     expect(view[0]).toBe(0x31)
     expect(stream.offset).toBe("1 0 obj\n<</Length 1>>\nstream\n".length)
   })
+  it("should parse stream with external length", () => {
+    const result = parseString("1 0 obj\n<</Length 1 0 R>>\nstream\n1\nendstream\nendobj")
+    expect(result).toBeInstanceOf(PdfStream)
+    const stream = result as PdfStream
+    const getter = jest.fn().mockReturnValue(1)
+    expect(stream.getLength(getter)).toBe(1)
+    const buf = stream.getValue(getter)
+    expect(buf.byteLength).toBe(1)
+    const view = new Uint8Array(buf)
+    expect(view[0]).toBe(0x31)
+  })
 })

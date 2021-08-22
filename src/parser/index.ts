@@ -93,13 +93,13 @@ export class PdfDocument {
   getTableOffset(): number {
     return this.tableOffset
   }
-  getTableEntry(index: number): IndirectObject | null {
+  getTableEntry(index: number, gen?:number): IndirectObject | null {
     if (index === 0) {
       return null
     }
     const line = bufToString(this.buf, this.tableEntryOffset + index * this.tableEntryLength, this.tableEntryLength)
-    const [offset, gen] = line.split(" ")
-    return new IndirectObject(this.buf, index, Number(offset), Number(gen))
+    const [offset, fileGen] = line.split(" ")
+    return new IndirectObject(this.buf, index, Number(offset), Number(fileGen))
   }
   getTableEntries(): (IndirectObject | null)[] {
     return [...Array(this.tableLength).keys()].map((k) => this.getTableEntry(k))

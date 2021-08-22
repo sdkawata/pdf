@@ -1,4 +1,4 @@
-import React, { useMemo } from "react"
+import React, { useMemo, useState } from "react"
 import { useRecoilState, useRecoilValue } from "recoil"
 import { PdfArray, PdfDict, PdfName, PdfObject, PdfRef, PdfStream, PdfTopLevelObject } from "./parser/objectparser"
 import { currentDocumentState, rightPanelState } from "./states"
@@ -69,15 +69,25 @@ const ObjectDisplay: React.FC<{object:PdfObject, prefix:string}> = ({
 }
 
 const StreamDisplay: React.FC<{stream:PdfStream}> = ({stream}) => {
+  const getter = (objNumber, gen) => (
+    currentDocument.getTableEntry(objNumber, gen).getValue()
+  )
+  const currentDocument = useRecoilValue(currentDocumentState)
+  const length = stream.getLength(getter)
+  const [displayed, setDisplayed] = useState(length < 10000)
   const str = useMemo(() => {
-    const buffer = stream.getValue()
-    return String.fromCharCode.apply("", new Uint8Array(buffer))
-  }, [stream])
+    if (displayed) {
+      const buffer = stream.getValue(getter)
+      return String.fromCharCode.apply("", new Uint8Array(buffer))
+    } else {
+      return ""
+    }
+  }, [stream, displayed])
   return (
     <>
-      stream: offset:{stream.offset}
+      stream: offset:{stream.offset} length:{length}
       <br/>
-      <ObjectDisplay object={stream.dict} prefix="stream dictionary" />
+      <ObjectDisplay object={stream.dict} prefix="stream dictionary " />
       <br/>
       <ObjectDisplayWrapper><pre><code>{str}</code></pre></ObjectDisplayWrapper>
     </>
@@ -88,7 +98,7 @@ const TopLevelObjectDisplay:React.FC<{object: PdfTopLevelObject}> = ({object}) =
   if (object instanceof PdfStream) {
     return <StreamDisplay stream={object}/>
   } else {
-    return <ObjectDisplay object={object} prefix={`object`}/>
+    return <ObjectDisplay object={object} prefix={`object `}/>
   }
 }
 
