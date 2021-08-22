@@ -14,6 +14,8 @@ jobs:
           node-version: 14.x
       - name: npm install
         run: npm install
+      - name: test js
+        run: npm test
       - name: build js
         run: npm run build-prod
       - name: relase to gh-pages
