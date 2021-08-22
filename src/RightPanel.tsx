@@ -103,6 +103,7 @@ const Panel: React.FC = () => {
         const value = rightPanel.object.getValue()
         return <TopLevelObjectDisplay object={value}/>
       } catch(e) {
+        console.log(e)
         return <ErrorDisplay message={e.message}/>
       }
     } else {

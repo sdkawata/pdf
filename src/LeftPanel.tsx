@@ -2,6 +2,7 @@ import React from "react"
 import { useRecoilState, useRecoilValue } from "recoil"
 import styled from "styled-components"
 import { IndirectObject } from "./parser"
+import { PdfArray, PdfDict, PdfName, PdfRef, PdfTopLevelObject } from "./parser/objectparser"
 import { currentDocumentState, leftPanelState, rightPanelState } from "./states"
 
 const tabHeight = "40px"
@@ -20,10 +21,16 @@ cursor:pointer;
 background-color: ${props => props.selected ? "#ffd580" : ""}
 `
 const TabSelector:React.FC = () => {
-  const leftPanel = useRecoilValue(leftPanelState)
+  const [leftPanel, setLeftPanel] = useRecoilState(leftPanelState)
   return <StyledTabSelector>
-    <StyledTab selected={leftPanel.tab === "objects"}>objects</StyledTab>
-    <StyledTab>trailer</StyledTab>
+    <StyledTab
+      selected={leftPanel.tab === "objects"}
+      onClick={() => setLeftPanel({tab: "objects"})}
+    >objects</StyledTab>
+    <StyledTab
+      selected={leftPanel.tab === "tree"}
+      onClick={() => setLeftPanel({tab: "tree"})}
+    >tree</StyledTab>
   </StyledTabSelector>
 }
 
@@ -37,6 +44,54 @@ height: calc(100% - ${tabHeight});
 overflow-y:scroll;
 `
 
+const ObjectList = styled.ul`
+list-style: none;
+padding: 0;
+`
+const ObjectListItem = styled.li`
+list-style: none;
+`
+const TreeRecursive: React.FC<{object:PdfTopLevelObject, prefix: string, indent:number}> = ({
+  object,prefix,indent
+}) => {
+  const currentDocument = useRecoilValue(currentDocumentState)
+  const style={marginLeft: `${indent*10}px`}
+  const prefixed = (e: React.ReactElement) => <span style={style}>{prefix}{e}</span>
+  if (object instanceof PdfDict) {
+    const children = Array.from(object.dict.entries())
+      .filter(([key, value]) => value instanceof PdfRef)
+      .map(([key, value]) => (
+          <ObjectListItem>
+            <TreeRecursive object={value} prefix={"/" + key + " "} indent={indent+1}/>
+          </ObjectListItem>)
+      )
+    if (children.length > 0) {
+      return (
+        <div>
+          <ObjectList>
+            <ObjectListItem>{prefixed(<></>)}</ObjectListItem>
+            {children}
+          </ObjectList>
+        </div>
+      )
+    } else {
+      return prefixed(<>{"{map}"}</>)
+    }
+  } else if (object instanceof PdfArray) {
+    return prefixed(<>[array]</>)
+  } else if (object instanceof PdfName) {
+    return prefixed(<>{"/" + object.name}</>)
+  } else if (object instanceof PdfRef) {
+    const value = currentDocument.getTableEntry(object.objNumber).getValue()
+    return <TreeRecursive object={value} prefix={`${prefix} ref ${object.objNumber} `} indent={indent}/>
+  }
+  return prefixed(<>{object}</>)
+}
+const Tree: React.FC = () => {
+  const currentDocument = useRecoilValue(currentDocumentState)
+  return <TreeRecursive object={currentDocument.trailer} prefix="trailer" indent={0}/>
+}
+
 const Panel: React.FC = () => {
   const currentDocument = useRecoilValue(currentDocumentState)
   const leftPanel = useRecoilValue(leftPanelState)
@@ -47,7 +102,10 @@ const Panel: React.FC = () => {
     }
     setRightPanel({state: "object", object})
   }
-  if (currentDocument) {
+  if (! currentDocument) {
+    return <>waiting for file. drag and drop pdf...</>
+  }
+  if (leftPanel.tab === "objects") {
     const pdfObjects = currentDocument.getTableEntries()
     return (
       <>
@@ -62,8 +120,8 @@ const Panel: React.FC = () => {
         })}
       </>
     )
-  } else {
-    return <>waiting for file. drag and drop pdf...</>
+  } else if (leftPanel.tab === "tree") {
+    return <Tree/>
   }
 }
 

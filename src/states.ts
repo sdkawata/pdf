@@ -3,6 +3,8 @@ import {Document, IndirectObject} from "./parser"
 
 export type LeftPanelStateType = {
   tab: "objects"
+} | {
+  tab: "tree"
 }
 
 export const leftPanelState = atom<LeftPanelStateType>({
