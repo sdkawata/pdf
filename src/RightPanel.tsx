@@ -1,12 +1,12 @@
-import React, { useMemo, useState } from "react"
-import { useRecoilState, useRecoilValue } from "recoil"
+import React, { useMemo, useRef, useState } from "react"
+import { errorSelector, useRecoilState, useRecoilValue } from "recoil"
 import { PdfArray, PdfDict, PdfName, PdfObject, PdfRef, PdfStream, PdfTopLevelObject } from "./parser/objectparser"
 import { currentDocumentState, rightPanelState } from "./states"
 import styled from "styled-components"
 import ObjectTree from "./ObjectTree"
 import Pako from "pako"
 
-const Error = styled.div`
+const StyledError = styled.div`
 background-color: red;
 `
 
@@ -43,13 +43,21 @@ const tryDefilter = (getter: ValueGetter, stream: PdfStream): {info: string, buf
   }
 }
 
+const isValueEqualName = (dict: PdfDict, key: string, name: string):boolean => {
+  const value = dict.dict.get(key)
+  return value instanceof PdfName && value.name === name
+}
+
 const StreamDisplay: React.FC<{stream:PdfStream}> = ({stream}) => {
   const getter = (objNumber, gen) => (
     currentDocument.getTableEntry(objNumber, gen).getValue()
   )
   const currentDocument = useRecoilValue(currentDocumentState)
+  const [showCanvas, setShowCanvas] = useState(false)
+  const canvas = useRef<HTMLCanvasElement | undefined>(undefined)
   const length = stream.getLength(getter)
   const displayed = length < 10000
+  let errors : string[] = []
   const download = (e:React.MouseEvent) => {
     // cf: https://stackoverflow.com/questions/19327749/javascript-blob-filename-without-link
     e.preventDefault()
@@ -63,7 +71,47 @@ const StreamDisplay: React.FC<{stream:PdfStream}> = ({stream}) => {
     window.URL.revokeObjectURL(url)
     a.remove()
   }
-  let errors : string[] = []
+  const showDrawButton = isValueEqualName(stream.dict, "Subtype", "Image") && isValueEqualName(stream.dict, "Type", "XObject")
+  const drawToCanvas = (e:React.MouseEvent) => {
+    e.preventDefault()
+    try {
+      const width = stream.dict.dict.get("Width")
+      const height = stream.dict.dict.get("Height")
+      if (typeof width !== "number" || typeof height !== "number") {
+        throw new Error("invalid width or height")
+      }
+      if (! isValueEqualName(stream.dict, "ColorSpace", "DeviceRGB")) {
+        throw new Error("unsupported colorspace")
+      }
+      if (stream.dict.dict.get("BitsPerComponent") !== 8) {
+        throw new Error("unsupported bitsperComponent")
+      }
+      let {info, buf} = tryDefilter(getter, stream)
+      const expectedSize = width * height * 3
+      if (buf.byteLength !== expectedSize) {
+        throw new Error("unexpected size expected: " + expectedSize + " actual: " + buf.byteLength)
+      }
+      let view = new Uint8Array(buf)
+      canvas.current.width = width
+      canvas.current.height = height
+      const context = canvas.current.getContext("2d")
+      const data = context.getImageData(0,0,width, height)
+      const arr = data.data
+      for (let iy =0;iy<height;iy++) {
+        for (let ix=0;ix<width;ix++) {
+          arr[(iy*width + ix)* 4] = view[(iy*width + ix)* 3]
+          arr[(iy*width + ix)* 4 + 1] = view[(iy*width + ix)* 3 + 1]
+          arr[(iy*width + ix)* 4 + 2] = view[(iy*width + ix)* 3 + 2]
+          arr[(iy*width + ix)* 4 + 3] = 255
+        }
+      }
+      context.putImageData(data,0,0)
+      console.log(data)
+      setShowCanvas(true)
+    } catch (e) {
+      console.log(e)
+    }
+  }
   let {info, str} = displayed ? (() => {
     try {
       let {info, buf} = tryDefilter(getter, stream)
@@ -80,12 +128,14 @@ const StreamDisplay: React.FC<{stream:PdfStream}> = ({stream}) => {
       <br/>
       <ObjectDisplay object={stream.dict} prefix="stream dictionary " />
       <br/>
-      {errors.length > 0 && <Error>{errors.join("\n")}</Error>}
+      {errors.length > 0 && <StyledError>{errors.join("\n")}</StyledError>}
       {info !== "" && <div>{info}</div>}
       {str !== "" && 
       <ObjectDisplayWrapper><pre><code>{str}</code></pre></ObjectDisplayWrapper>
       }
-      <a href="/" onClick={download}>try download</a>
+      <a href="/" onClick={download}>try download</a><br/>
+      {showDrawButton && <><a href="/" onClick={drawToCanvas}>try draw to canvas</a><br/></>}
+      <canvas ref={canvas} style={{width: "100%", display: showCanvas ? '' : 'none'}}/>
     </>
   )
 }
@@ -99,7 +149,7 @@ const TopLevelObjectDisplay:React.FC<{object: PdfTopLevelObject}> = ({object}) =
 }
 
 const ErrorDisplay: React.FC<{message:string}> = ({message}) => {
-  return <Error>{message}</Error>
+  return <StyledError>{message}</StyledError>
 }
 
 
