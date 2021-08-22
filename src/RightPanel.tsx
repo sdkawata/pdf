@@ -49,7 +49,7 @@ const StreamDisplay: React.FC<{stream:PdfStream}> = ({stream}) => {
   )
   const currentDocument = useRecoilValue(currentDocumentState)
   const length = stream.getLength(getter)
-  const [displayed, setDisplayed] = useState(length < 10000)
+  const displayed = length < 10000
   const download = (e:React.MouseEvent) => {
     // cf: https://stackoverflow.com/questions/19327749/javascript-blob-filename-without-link
     e.preventDefault()
