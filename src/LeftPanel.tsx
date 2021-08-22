@@ -71,10 +71,11 @@ position: relative;
 }
 }
 `;
-const TreeRecursive: React.FC<{object:PdfTopLevelObject, prefix: string, defaultOpened?:boolean}> = ({
+const TreeRecursive: React.FC<{object:PdfTopLevelObject, prefix: React.ReactElement, defaultOpened?:boolean}> = ({
   object,prefix,defaultOpened = false
 }) => {
   const [opened, setOpened] = useState(defaultOpened)
+  const [rightPanel, setRightPanel] = useRecoilState(rightPanelState)
   const currentDocument = useRecoilValue(currentDocumentState)
   const prefixed = (e: React.ReactElement, openable:boolean = false) => (<>
     <ObjectListItem openable={openable}>
@@ -86,7 +87,7 @@ const TreeRecursive: React.FC<{object:PdfTopLevelObject, prefix: string, default
     if (opened) {
       const children = Array.from(object.dict.entries())
       .map(([key, value]) => (
-        <TreeRecursive key={key} object={value} prefix={"/" + key + " "} defaultOpened={true}/>
+        <TreeRecursive key={key} object={value} prefix={<>{"/" + key + " "}</>} defaultOpened={true}/>
       ))
       return prefixed(<>
         <ObjectList>
@@ -100,7 +101,7 @@ const TreeRecursive: React.FC<{object:PdfTopLevelObject, prefix: string, default
     if (opened) {
       const children = object.array
       .map((value, idx) => (
-        <TreeRecursive key={idx} object={value} prefix={""} defaultOpened={true}/>
+        <TreeRecursive key={idx} object={value} prefix={<></>} defaultOpened={true}/>
       ))
       return prefixed(<>
         <ObjectList>
@@ -113,8 +114,16 @@ const TreeRecursive: React.FC<{object:PdfTopLevelObject, prefix: string, default
   } else if (object instanceof PdfName) {
     return prefixed(<>{"/" + object.name}</>)
   } else if (object instanceof PdfRef) {
+    const onClick = (e) => {
+      e.preventDefault()
+      setRightPanel({state: "object", object: currentDocument.getTableEntry(object.objNumber)})
+    }
     const value = currentDocument.getTableEntry(object.objNumber).getValue()
-    return <TreeRecursive object={value} prefix={`${prefix} ref ${object.objNumber} `} defaultOpened={false}/>
+    return <TreeRecursive
+      object={value}
+      prefix={<>{prefix}<a href="./" onClick={onClick}>{`ref ${object.objNumber}`}</a>{" "}</>}
+      defaultOpened={false}
+    />
   } else if (object instanceof PdfStream) {
     return prefixed(<>stream</>)
   }
@@ -123,7 +132,7 @@ const TreeRecursive: React.FC<{object:PdfTopLevelObject, prefix: string, default
 const Tree: React.FC = () => {
   const currentDocument = useRecoilValue(currentDocumentState)
   return <ObjectList>
-    <TreeRecursive object={currentDocument.trailer} prefix="trailer" defaultOpened={true}/>
+    <TreeRecursive object={currentDocument.trailer} prefix={<>trailer</>} defaultOpened={true}/>
   </ObjectList>
 }
 
