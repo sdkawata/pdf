@@ -24,20 +24,22 @@ export class Reader {
   // > The carriage return (CR) and line feed (LF) characters, alos called newline characters, are treated as end-of-line(EOL) markers.
   // > The combination of a carriage return followed by immediately by a line feed is treated as one EOL marker.
   skipEOL():void {
-    if (this.view[this.current] === 0x0a) {
+    if (this.peek() === 0x0d && this.peek(1) === 0x0a) {
+      this.current+=2
+    } else if (this.peek() === 0x0a) {
       this.current++
-    } else if (this.view[this.current] === 0x0d) {
+    } else if (this.peek() === 0x0d) {
       this.current++
     }
-    //TODO CRLF
   }
   reverseSkipEOL():void {
-    if (this.peek() === 0x0a) {
+    if (this.peek() === 0x0a && this.peek(-1) === 0x0d) {
+      this.current-=2
+    } else if (this.peek() === 0x0a) {
       this.current--
     } else if (this.peek() === 0x0d) {
       this.current--
     }
-    //TODO CRLF
   }
   reverseReadStringUntilEOL():string {
     this.reverseSkipEOL()
