@@ -25,7 +25,10 @@ type ValueGetter = (objNumber: number, gen: number) => PdfTopLevelObject
 const tryDefilter = (getter: ValueGetter, stream: PdfStream): {info: string, buf: ArrayBuffer} => {
   const buffer = stream.getValue(getter)
   const filter = stream.dict.dict.get('Filter')
-  if (filter && filter instanceof PdfName && filter.name === "FlateDecode") {
+  if (filter && (
+    (filter instanceof PdfName && filter.name === "FlateDecode") ||
+    (filter instanceof PdfArray && filter.array.length === 1 && filter.array[0] instanceof PdfName && filter.array[0].name === "FlateDecode")
+  )) {
     try {
       const deflated = Pako.inflate(new Uint8Array(buffer))
       return {
@@ -88,7 +91,7 @@ const StreamDisplay: React.FC<{stream:PdfStream}> = ({stream}) => {
       }
       let {info, buf} = tryDefilter(getter, stream)
       const expectedSize = width * height * 3
-      if (buf.byteLength !== expectedSize) {
+      if (buf.byteLength < expectedSize) {
         throw new Error("unexpected size expected: " + expectedSize + " actual: " + buf.byteLength)
       }
       let view = new Uint8Array(buf)
