@@ -17,8 +17,7 @@ export class Reader {
       this.current++
     }
     const str = bufToString(this.buf, start, this.current - start)
-    // TODO: CRLF
-    this.current++
+    this.skipEOL()
     return str
   }
   // > The carriage return (CR) and line feed (LF) characters, alos called newline characters, are treated as end-of-line(EOL) markers.
