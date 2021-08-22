@@ -162,6 +162,19 @@ const parseDict = (reader: Reader): PdfDict => {
   return new PdfDict(dict)
 }
 
+
+const parseHexString = (reader:Reader): string => {
+  let str = ""
+  reader.readOne()
+  while (!reader.outOfBounds() && reader.peekChar() !== ">") {
+    const char = reader.readChar()
+    const char2 = reader.readChar()
+    str += String.fromCharCode(Number('0x' + char + char2))
+  }
+  reader.readOne()
+  return str
+}
+
 const parseArray = (reader: Reader): PdfArray => {
   if (reader.readChar() !== '[') {
     throw new Error('unexpected token expect [')
@@ -191,7 +204,11 @@ export const parseObject = (reader:Reader):PdfObject => {
   } else if (peeked === 0x74 || peeked === 0x66) {
     return parseBool(reader)
   } else if (peeked === 0x3c) {
-    return parseDict(reader)
+    if (reader.peek(1) === 0x3c) {
+      return parseDict(reader)
+    } else {
+      return parseHexString(reader)
+    }
   } else if (peeked === 0x5b) {
     return parseArray(reader)
   }

@@ -70,6 +70,9 @@ describe("parsePdfObject", () => {
     expectToBeName(array[0], "a")
     expectToBeName(array[1], "b")
   })
+  it("should parse string", () => {
+    expect(parseString("<414243>")).toBe("ABC")
+  })
 })
 
 
