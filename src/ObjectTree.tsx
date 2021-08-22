@@ -2,7 +2,7 @@ import React, { useState } from "react"
 import { useRecoilState, useRecoilValue } from "recoil"
 import styled from "styled-components"
 import { PdfArray, PdfDict, PdfName, PdfObject, PdfRef, PdfStream, PdfTopLevelObject } from "./parser/objectparser"
-import { currentDocumentState, rightPanelState } from "./states"
+import { currentDocumentState, rightPanelState, useStringDisplayer } from "./states"
 import {Error} from "./styled"
 
 
@@ -45,6 +45,7 @@ const TreeRecursive: React.FC<{object:PdfTopLevelObject, prefix: React.ReactElem
   const [opened, setOpened] = useState(defaultOpened)
   const [rightPanel, setRightPanel] = useRecoilState(rightPanelState)
   const currentDocument = useRecoilValue(currentDocumentState)
+  const displayer = useStringDisplayer()
   const prefixed = (e: React.ReactElement, openable:boolean = false, children?: React.ReactElement) => (<>
     <ObjectListItem openable={openable}>
       <ObjectListLine onClick={() => setOpened(b => !b)} openable={openable}>
@@ -103,7 +104,7 @@ const TreeRecursive: React.FC<{object:PdfTopLevelObject, prefix: React.ReactElem
   } else if (object instanceof PdfStream) {
     return prefixed(<>stream</>)
   } else if (object instanceof ArrayBuffer) {
-    return prefixed(<>{String.fromCharCode.apply("", new Uint8Array(object))}</>)
+    return prefixed(<>{displayer(object)}</>)
   }
   return prefixed(<>{object}</>)
 }

@@ -1,5 +1,6 @@
 import { atom } from "recoil";
 import {PdfDocument, IndirectObject} from "./parser"
+import { autoDecode } from "./coding";
 
 export type LeftPanelStateType = {
   tab: "objects"
@@ -32,8 +33,12 @@ export const currentDocumentState = atom<PdfDocument | null>({
   default: null,
 })
 
-
 export const filenameState = atom<string | undefined>({
   key: 'filename',
   default: undefined,
 })
+
+type Displayer = (buf: ArrayBuffer) => string
+export const useStringDisplayer = ():Displayer => {
+  return autoDecode
+}

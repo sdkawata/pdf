@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from "react"
 import { errorSelector, useRecoilState, useRecoilValue } from "recoil"
 import { PdfArray, PdfDict, PdfName, PdfObject, PdfRef, PdfStream, PdfTopLevelObject } from "./parser/objectparser"
-import { currentDocumentState, rightPanelState } from "./states"
+import { currentDocumentState, rightPanelState, useStringDisplayer } from "./states"
 import styled from "styled-components"
 import ObjectTree from "./ObjectTree"
 import Pako from "pako"
@@ -61,6 +61,7 @@ const StreamDisplay: React.FC<{stream:PdfStream}> = ({stream}) => {
   const [showCanvas, setShowCanvas] = useState(false)
   const canvas = useRef<HTMLCanvasElement | undefined>(undefined)
   const [imageUrl, setImageUrl] = useState<string | undefined>(undefined)
+  const displayer = useStringDisplayer()
   useEffect(() => {
     if (imageUrl !== "") {
       return () => {window.URL.revokeObjectURL(imageUrl)}
@@ -141,7 +142,7 @@ const StreamDisplay: React.FC<{stream:PdfStream}> = ({stream}) => {
       if (buf.byteLength >= DISPLAY_THRESHOLD) {
         return {info: "", str: ""}
       }
-      return {info, str: String.fromCharCode.apply("", new Uint8Array(buf))}
+      return {info, str: displayer(buf)}
     } catch (e) {
       console.log(e)
       errors.push(e.message)
