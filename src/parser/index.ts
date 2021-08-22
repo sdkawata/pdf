@@ -46,7 +46,30 @@ export class Document {
     checkEof(reader)
     const tableOffset = Number(reader.reverseReadStringUntilEOL())
 
-    // find trailer
+    // parse cross-reference table
+    this.tableOffset = tableOffset
+    reader.seek(this.tableOffset)
+    const xref = reader.readLine()
+    if (xref !== "xref") {
+      throw new Error("invlid cross-ref table expect:xref got:" + xref)
+    } 
+    const tableHeader = reader.readLine()
+    const [indexOffset, tableLength] = tableHeader.split(" ")
+    this.indexOffset = Number(indexOffset)
+    if (this.indexOffset !== 0) {
+      throw new Error('indexOffset:' + this.indexOffset + ' not 0')
+    }
+    this.tableLength = Number(tableLength)
+    const startPos = this.tableEntryOffset = reader.pos()
+    reader.readLine()
+    const endPos = reader.pos()
+    this.tableEntryLength = endPos - startPos
+
+    this.trailer = this.parseTrailer(reader)
+  }
+
+  parseTrailer(reader:Reader): PdfDict {
+    reader.seekToLast()
     while(true) {
       reader.reverseSkipEOL()
       const str = reader.reverseReadStringUntilEOL()
@@ -59,26 +82,10 @@ export class Document {
     reader.skipEOL()
     const trailer = parseObject(reader)
     if (trailer instanceof PdfDict) {
-      this.trailer = trailer
+      return trailer
     } else {
       throw new Error("trailer is not dict")
     }
-
-    // parse cross-reference table
-    this.tableOffset = tableOffset
-    reader.seek(this.tableOffset)
-    reader.readLine() // skip xref
-    const tableHeader = reader.readLine()
-    const [indexOffset, tableLength] = tableHeader.split(" ")
-    this.indexOffset = Number(indexOffset)
-    if (this.indexOffset !== 0) {
-      throw new Error('indexOffset:' + this.indexOffset + ' not 0')
-    }
-    this.tableLength = Number(tableLength)
-    const startPos = this.tableEntryOffset = reader.pos()
-    reader.readLine()
-    const endPos = reader.pos()
-    this.tableEntryLength = endPos - startPos
   }
   getHeader(): string {
     return this.header
@@ -99,6 +106,6 @@ export class Document {
   }
 }
 
-export const parse = async (buf:ArrayBuffer): Promise<Document> => {
+export const parse = (buf:ArrayBuffer): Document => {
   return new Document(buf)
 }

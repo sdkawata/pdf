@@ -39,7 +39,7 @@ const App: React.FC = () => {
         })
         reader.readAsArrayBuffer(file)
       }) as ArrayBuffer
-      const pdfDocument = await parse(arrayBuffer)
+      const pdfDocument = parse(arrayBuffer)
       setCurrentDocument(pdfDocument)
       setRightPanel({state: "none"})
     }
