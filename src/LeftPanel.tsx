@@ -102,7 +102,6 @@ const TreeRecursive: React.FC<{object:PdfTopLevelObject, prefix: string, default
       .map((value, idx) => (
         <TreeRecursive key={idx} object={value} prefix={""} defaultOpened={true}/>
       ))
-      console.log(children)
       return prefixed(<>
         <ObjectList>
           {children}
