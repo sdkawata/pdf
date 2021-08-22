@@ -20,6 +20,29 @@ const ObjectDisplay: React.FC<{object:PdfObject, prefix:string}> = ({
   return <ObjectDisplayWrapper><ObjectTree object={object} prefix={prefix} /></ObjectDisplayWrapper>
 }
 
+type ValueGetter = (objNumber: number, gen: number) => PdfTopLevelObject
+
+const tryDefilter = (getter: ValueGetter, stream: PdfStream): {info: string, buf: ArrayBuffer} => {
+  const buffer = stream.getValue(getter)
+  const filter = stream.dict.dict.get('Filter')
+  if (filter && filter instanceof PdfName && filter.name === "FlateDecode") {
+    try {
+      const deflated = Pako.inflate(new Uint8Array(buffer))
+      return {
+        info: "decoded by deflate",
+        buf: deflated,
+      }
+    } catch (e) {
+      throw e
+    }
+  } else {
+    return {
+      info: "raw data",
+      buf: buffer
+    }
+  }
+}
+
 const StreamDisplay: React.FC<{stream:PdfStream}> = ({stream}) => {
   const getter = (objNumber, gen) => (
     currentDocument.getTableEntry(objNumber, gen).getValue()
@@ -27,25 +50,30 @@ const StreamDisplay: React.FC<{stream:PdfStream}> = ({stream}) => {
   const currentDocument = useRecoilValue(currentDocumentState)
   const length = stream.getLength(getter)
   const [displayed, setDisplayed] = useState(length < 10000)
-  let errors : string[] = []
-  let info = "raw data"
-  let str = ""
-  if (displayed) {
-    const buffer = stream.getValue(getter)
-    const filter = stream.dict.dict.get('Filter')
-    if (filter && filter instanceof PdfName && filter.name === "FlateDecode") {
-      try {
-        info = "decoded by deflate"
-        const deflated = Pako.inflate(new Uint8Array(buffer))
-        str = String.fromCharCode.apply("", new Uint8Array(deflated))
-      } catch (e) {
-        console.log(e)
-        errors.push("trying to deflate but failed: " + e.message)
-      }
-    } else {
-      str = String.fromCharCode.apply("", new Uint8Array(buffer))
-    }
+  const download = (e:React.MouseEvent) => {
+    // cf: https://stackoverflow.com/questions/19327749/javascript-blob-filename-without-link
+    e.preventDefault()
+    let {info, buf} = tryDefilter(getter, stream)
+    const a = document.createElement("a")
+    document.body.appendChild(a)
+    const url = window.URL.createObjectURL(new Blob([buf]))
+    a.href = url
+    a.download="pdf-innerfile"
+    a.click()
+    window.URL.revokeObjectURL(url)
+    a.remove()
   }
+  let errors : string[] = []
+  let {info, str} = displayed ? (() => {
+    try {
+      let {info, buf} = tryDefilter(getter, stream)
+      return {info, str: String.fromCharCode.apply("", new Uint8Array(buf))}
+    } catch (e) {
+      console.log(e)
+      errors.push(e.message)
+      return {info: "", str: ""}
+    }
+  })() : {info:"", str: ""}
   return (
     <>
       stream: offset:{stream.offset} length:{length}
@@ -57,6 +85,7 @@ const StreamDisplay: React.FC<{stream:PdfStream}> = ({stream}) => {
       {str !== "" && 
       <ObjectDisplayWrapper><pre><code>{str}</code></pre></ObjectDisplayWrapper>
       }
+      <a href="/" onClick={download}>try download</a>
     </>
   )
 }
