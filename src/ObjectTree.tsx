@@ -3,6 +3,7 @@ import { useRecoilState, useRecoilValue } from "recoil"
 import styled from "styled-components"
 import { PdfArray, PdfDict, PdfName, PdfObject, PdfRef, PdfStream, PdfTopLevelObject } from "./parser/objectparser"
 import { currentDocumentState, rightPanelState } from "./states"
+import {Error} from "./styled"
 
 
 const ObjectList = styled.ul`
@@ -37,9 +38,6 @@ position: relative;
   cursor: pointer;
 }
 }
-`;
-const ErrorLine = styled.div`
-background-color: pink;
 `;
 const TreeRecursive: React.FC<{object:PdfTopLevelObject, prefix: React.ReactElement, defaultOpened?:boolean}> = ({
   object,prefix,defaultOpened = false
@@ -100,7 +98,7 @@ const TreeRecursive: React.FC<{object:PdfTopLevelObject, prefix: React.ReactElem
         defaultOpened={false}
       />
     } catch (e) {
-      return <ObjectListItem><ErrorLine>{e.message}</ErrorLine></ObjectListItem>
+      return <ObjectListItem><Error>{e.message}</Error></ObjectListItem>
     }
   } else if (object instanceof PdfStream) {
     return prefixed(<>stream</>)

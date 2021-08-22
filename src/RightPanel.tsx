@@ -4,6 +4,7 @@ import { PdfArray, PdfDict, PdfName, PdfObject, PdfRef, PdfStream, PdfTopLevelOb
 import { currentDocumentState, rightPanelState } from "./states"
 import styled from "styled-components"
 import ObjectTree from "./ObjectTree"
+import Pako from "pako"
 
 const Error = styled.div`
 background-color: red;
@@ -26,21 +27,36 @@ const StreamDisplay: React.FC<{stream:PdfStream}> = ({stream}) => {
   const currentDocument = useRecoilValue(currentDocumentState)
   const length = stream.getLength(getter)
   const [displayed, setDisplayed] = useState(length < 10000)
-  const str = useMemo(() => {
-    if (displayed) {
-      const buffer = stream.getValue(getter)
-      return String.fromCharCode.apply("", new Uint8Array(buffer))
+  let errors : string[] = []
+  let info = "raw data"
+  let str = ""
+  if (displayed) {
+    const buffer = stream.getValue(getter)
+    const filter = stream.dict.dict.get('Filter')
+    if (filter && filter instanceof PdfName && filter.name === "FlateDecode") {
+      try {
+        info = "decoded by deflate"
+        const deflated = Pako.inflate(new Uint8Array(buffer))
+        str = String.fromCharCode.apply("", new Uint8Array(deflated))
+      } catch (e) {
+        console.log(e)
+        errors.push("trying to deflate but failed: " + e.message)
+      }
     } else {
-      return ""
+      str = String.fromCharCode.apply("", new Uint8Array(buffer))
     }
-  }, [stream, displayed])
+  }
   return (
     <>
       stream: offset:{stream.offset} length:{length}
       <br/>
       <ObjectDisplay object={stream.dict} prefix="stream dictionary " />
       <br/>
+      {errors.length > 0 && <Error>{errors.join("\n")}</Error>}
+      {info !== "" && <div>{info}</div>}
+      {str !== "" && 
       <ObjectDisplayWrapper><pre><code>{str}</code></pre></ObjectDisplayWrapper>
+      }
     </>
   )
 }
