@@ -130,6 +130,8 @@ const isDelimiter  = (n:number) =>
   n === 0x2f || // /
   n === 0x3c || // <
   n === 0x3e || // >
+  n === 0x28 || // (
+  n === 0x29 || // )
   n === 0x5b || // [
   n === 0x5d    // ]
 const parseName = (reader:Reader): PdfName => {

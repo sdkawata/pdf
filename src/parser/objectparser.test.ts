@@ -45,7 +45,7 @@ describe("parsePdfObject", () => {
     expectToBeRef(parseString("6 0 R"), 6, 0)
   })
   it("should parse dict", () => {
-    const value = parseString('<</a 1/b (abc)/c <</d 1 /c 3>> >>')
+    const value = parseString('<</a 1/b(abc)/c<</d 1 /c 3>>>>')
     expect(value).toBeInstanceOf(PdfDict)
     const dict = (value as PdfDict).dict
     expect(dict.get('a')).toBe(1)
