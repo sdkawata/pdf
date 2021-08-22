@@ -121,7 +121,7 @@ const StreamDisplay: React.FC<{stream:PdfStream}> = ({stream}) => {
       setShowCanvas(true)
     } catch (e) {
       console.log(e)
-      alert(e.message)
+      alert(e.message ? e.message : e)
     }
   }
   const loadToImg = (e:React.MouseEvent) => {
@@ -132,7 +132,7 @@ const StreamDisplay: React.FC<{stream:PdfStream}> = ({stream}) => {
       setImageUrl(url)
     } catch (e) {
       console.log(e)
-      alert(e.message)
+      alert(e.message ? e.message : e)
     }
   }
   let {info, str} = displayed ? (() => {
@@ -145,8 +145,7 @@ const StreamDisplay: React.FC<{stream:PdfStream}> = ({stream}) => {
       return {info, str: displayer(buf)}
     } catch (e) {
       console.log(e)
-      errors.push(e.message)
-      alert(e.message)
+      errors.push(e.message ? e.message : e)
       return {info: "", str: ""}
     }
   })() : {info:"", str: ""}
