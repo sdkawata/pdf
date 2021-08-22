@@ -96,6 +96,10 @@ describe("parseIndirectObject", () => {
     expect(result).toBeInstanceOf(PdfStream)
     const stream = result as PdfStream
     expect(stream.dict.dict.get("Length")).toBe(1)
+    const buf = stream.getValue()
+    expect(buf.byteLength).toBe(1)
+    const view = new Uint8Array(buf)
+    expect(view[0]).toBe(0x31)
     expect(stream.offset).toBe("1 0 obj\n<</Length 1>>\nstream\n".length)
   })
 })

@@ -31,7 +31,7 @@ export class PdfStream {
     this.dict = dict
   }
   getValue(): ArrayBuffer {
-    const length = this.dict.dict["Length"] as number
+    const length = this.dict.dict.get("Length") as number
     return this.buf.slice(this.offset, this.offset + length)
   }
 }
