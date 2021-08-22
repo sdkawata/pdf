@@ -5,57 +5,8 @@ import { currentDocumentState, rightPanelState } from "./states"
 import styled from "styled-components"
 import ObjectTree from "./ObjectTree"
 
-const ObjectDisplayRecursive: React.FC<{object:PdfObject, indent?:number, prefix?: string}> = ({object, indent, prefix}) => {
-  const [rightPanel, setRightPanel] = useRecoilState(rightPanelState)
-  const currentDocument = useRecoilValue(currentDocumentState)
-  prefix = prefix || ""
-  indent = indent || 0
-  const style={marginLeft: `${indent*10}px`}
-  const prefixed = (e: React.ReactElement) => <span style={style}>{prefix}{e}</span>
-  if (object instanceof PdfDict) {
-    return (<>
-        {prefixed(<>{"{"}</>)}<br/>
-        {Array.from(object.dict.entries()).map(([key, value]) => (
-          <React.Fragment key={key}>
-            <ObjectDisplayRecursive object={value} indent={indent+1} prefix={`/${key} `}/>
-            <br/>
-          </React.Fragment>
-        ))}
-        {<span style={style}>{"}"}</span>}
-      </>
-    )
-  } else if (object instanceof PdfArray) {
-    return (
-      <>
-        {prefixed(<>[</>)}<br/>
-        {object.array.map((obj, idx) => (
-          <React.Fragment key={idx}>
-            <ObjectDisplayRecursive object={obj} indent={indent+1}/>
-            <br/>
-          </React.Fragment>
-        ))}
-        {<span style={style}>]</span>}
-      </>
-    )
-  } else if (object instanceof PdfName) {
-    return prefixed(<>{"/" + object.name}</>)
-  } else if (object instanceof PdfRef) {
-    const onClick = (e) => {
-      e.preventDefault()
-      setRightPanel({state: "object", object: currentDocument.getTableEntry(object.objNumber)})
-    }
-    return prefixed(<a href={"./"} onClick={onClick}>{"ref:" + object.objNumber + " " + object.gen}</a>)
-  }
-  return prefixed(<>{object}</>)
-}
-
 const Error = styled.div`
 background-color: red;
-`
-
-const ValueField = styled.div`
-background-color: #ccc;
-padding: 5px;
 `
 
 const ObjectDisplayWrapper = styled.div`
@@ -113,12 +64,20 @@ overflow:scroll;
 `
 
 const Panel: React.FC = () => {
+  const currentDocument = useRecoilValue(currentDocumentState)
   const rightPanel = useRecoilValue(rightPanelState)
-  const objectPanel =useMemo(() => {
+  const objectPanel = useMemo(() => {
     if (rightPanel.state === "object") {
       try {
-        const value = rightPanel.object.getValue()
-        return <TopLevelObjectDisplay object={value}/>
+        const {objectNumber, gen} = rightPanel
+        const object = currentDocument.getTableEntry(objectNumber, gen)
+        const value = object.getValue()
+        return (
+          <>
+            <div>objNumber: {objectNumber} gen:{gen} offset: {object.offset}</div>
+            <TopLevelObjectDisplay object={value}/>
+          </>
+        )
       } catch(e) {
         console.log(e)
         return <ErrorDisplay message={e.message}/>

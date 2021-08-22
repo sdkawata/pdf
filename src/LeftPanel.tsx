@@ -49,11 +49,8 @@ const Panel: React.FC = () => {
   const currentDocument = useRecoilValue(currentDocumentState)
   const leftPanel = useRecoilValue(leftPanelState)
   const [rightPanel, setRightPanel] = useRecoilState(rightPanelState)
-  const showObject = (object: IndirectObject | null) => {
-    if (object === null) {
-      return
-    }
-    setRightPanel({state: "object", object})
+  const showObject = (objectNumber: number, gen: number) => {
+    setRightPanel({state: "object", objectNumber, gen})
   }
   if (! currentDocument) {
     return <>waiting for file. drag and drop pdf...</>
@@ -64,9 +61,9 @@ const Panel: React.FC = () => {
       <>
         {pdfObjects.map((object,index) => {
           return <ObjectRow
-            selected={rightPanel.state==="object" && rightPanel.object.index === index}
+            selected={rightPanel.state==="object" && rightPanel.objectNumber === index}
             key={index}
-            onClick={() => showObject(object)}
+            onClick={() => showObject(object.index, object.gen)}
           >
             index:{index} {object ? <>gen:{object.gen} offset:{object.offset}</> : <></>}
           </ObjectRow>

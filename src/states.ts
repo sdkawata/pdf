@@ -14,7 +14,8 @@ export const leftPanelState = atom<LeftPanelStateType>({
 
 export type RightPanelStateType = {
   state: "object",
-  object: IndirectObject,
+  objectNumber: number,
+  gen: number,
 } | {
   state: "none",
 }

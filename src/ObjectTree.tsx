@@ -87,9 +87,10 @@ const TreeRecursive: React.FC<{object:PdfTopLevelObject, prefix: React.ReactElem
   } else if (object instanceof PdfName) {
     return prefixed(<>{"/" + object.name}</>)
   } else if (object instanceof PdfRef) {
-    const onClick = (e) => {
+    const onClick = (e: React.MouseEvent) => {
       e.preventDefault()
-      setRightPanel({state: "object", object: currentDocument.getTableEntry(object.objNumber)})
+      e.stopPropagation()
+      setRightPanel({state: "object", objectNumber: object.objNumber, gen:object.gen})
     }
     try {
       const value = currentDocument.getTableEntry(object.objNumber).getValue()
