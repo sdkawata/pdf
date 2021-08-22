@@ -1,7 +1,8 @@
 const path = require('path')
+const CopyPlugin = require('copy-webpack-plugin')
 
 module.exports = {
-  mode: 'development',
+  mode: process.env.WEBPACK_MODE === "production" ? "production" : 'development',
   entry: {
     main: './src/Index.tsx',
   },
@@ -26,5 +27,12 @@ module.exports = {
     compress: true,
     port: 9000,
     hot: true,
-  }
+  },
+  plugins: [
+    new CopyPlugin({
+      patterns: [
+        {from: "static", to: "."}
+      ]
+    })
+  ]
 }

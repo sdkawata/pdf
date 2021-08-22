@@ -5,7 +5,8 @@
   "main": "index.js",
   "scripts": {
     "test": "jest",
-    "serve": "webpack serve"
+    "serve": "webpack serve",
+    "build-prod": "WEBPACK_MODE=production webpack"
   },
   "author": "",
   "license": "ISC",
@@ -13,6 +14,7 @@
     "@types/jest": "^27.0.1",
     "@types/react": "^17.0.19",
     "@types/styled-components": "^5.1.12",
+    "copy-webpack-plugin": "^9.0.1",
     "jest": "^27.0.6",
     "mocha": "^9.1.0",
     "react": "^17.0.2",
