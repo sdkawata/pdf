@@ -1,4 +1,4 @@
-import React, { useMemo, useRef, useState } from "react"
+import React, { useEffect, useMemo, useRef, useState } from "react"
 import { errorSelector, useRecoilState, useRecoilValue } from "recoil"
 import { PdfArray, PdfDict, PdfName, PdfObject, PdfRef, PdfStream, PdfTopLevelObject } from "./parser/objectparser"
 import { currentDocumentState, rightPanelState } from "./states"
@@ -58,6 +58,12 @@ const StreamDisplay: React.FC<{stream:PdfStream}> = ({stream}) => {
   const currentDocument = useRecoilValue(currentDocumentState)
   const [showCanvas, setShowCanvas] = useState(false)
   const canvas = useRef<HTMLCanvasElement | undefined>(undefined)
+  const [imageUrl, setImageUrl] = useState<string | undefined>(undefined)
+  useEffect(() => {
+    if (imageUrl !== "") {
+      return () => {window.URL.revokeObjectURL(imageUrl)}
+    }
+  }, [imageUrl])
   const length = stream.getLength(getter)
   const displayed = length < 10000
   let errors : string[] = []
@@ -115,6 +121,17 @@ const StreamDisplay: React.FC<{stream:PdfStream}> = ({stream}) => {
       alert(e.message)
     }
   }
+  const loadToImg = (e:React.MouseEvent) => {
+    e.preventDefault()
+    try {
+      let {info, buf} = tryDefilter(getter, stream)
+      const url = window.URL.createObjectURL(new Blob([buf]))
+      setImageUrl(url)
+    } catch (e) {
+      console.log(e)
+      alert(e.message)
+    }
+  }
   let {info, str} = displayed ? (() => {
     try {
       let {info, buf} = tryDefilter(getter, stream)
@@ -138,8 +155,10 @@ const StreamDisplay: React.FC<{stream:PdfStream}> = ({stream}) => {
       <ObjectDisplayWrapper><pre><code>{str}</code></pre></ObjectDisplayWrapper>
       }
       <a href="/" onClick={download}>try download</a><br/>
+      <a href="/" onClick={loadToImg}>try load as image</a><br/>
       {showDrawButton && <><a href="/" onClick={drawToCanvas}>try draw to canvas</a><br/></>}
       <canvas ref={canvas} style={{width: "100%", display: showCanvas ? '' : 'none'}}/>
+      <img src={imageUrl} style={{width: "100%", display: imageUrl ? '' : 'none'}}/>
     </>
   )
 }
