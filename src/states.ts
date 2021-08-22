@@ -5,6 +5,8 @@ export type LeftPanelStateType = {
   tab: "objects"
 } | {
   tab: "tree"
+}| {
+  tab: "misc"
 }
 
 export const leftPanelState = atom<LeftPanelStateType>({
@@ -28,4 +30,10 @@ export const rightPanelState = atom<RightPanelStateType>({
 export const currentDocumentState = atom<PdfDocument | null>({
   key: "currentDocument",
   default: null,
+})
+
+
+export const filenameState = atom<string | undefined>({
+  key: 'filename',
+  default: undefined,
 })

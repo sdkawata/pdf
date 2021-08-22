@@ -1,8 +1,7 @@
-import React, { useState } from "react"
+import React from "react"
 import { useRecoilState, useRecoilValue } from "recoil"
 import styled from "styled-components"
-import { IndirectObject } from "./parser"
-import { currentDocumentState, leftPanelState, rightPanelState } from "./states"
+import { currentDocumentState, filenameState, leftPanelState, rightPanelState } from "./states"
 import ObjectTree from "./ObjectTree"
 
 const tabHeight = "40px"
@@ -37,6 +36,10 @@ const TabSelector:React.FC = () => {
       selected={leftPanel.tab === "tree"}
       onClick={() => setLeftPanel({tab: "tree"})}
     >tree</StyledTab>
+    <StyledTab
+    selected={leftPanel.tab === "misc"}
+    onClick={() => setLeftPanel({tab: "misc"})}
+  >misc</StyledTab>
   </StyledTabSelector>
 }
 
@@ -47,6 +50,7 @@ background-color: ${props => props.selected ? "#ccc": "white"}
 
 const Panel: React.FC = () => {
   const currentDocument = useRecoilValue(currentDocumentState)
+  const filename = useRecoilValue(filenameState)
   const leftPanel = useRecoilValue(leftPanelState)
   const [rightPanel, setRightPanel] = useRecoilState(rightPanelState)
   const showObject = (objectNumber: number, gen: number) => {
@@ -72,6 +76,11 @@ const Panel: React.FC = () => {
     )
   } else if (leftPanel.tab === "tree") {
     return <ObjectTree object={currentDocument.trailer} prefix="trailer" />
+  } else if (leftPanel.tab === "misc") {
+    return (<>
+      <div>filename:{filename}</div>
+      <div>header: {currentDocument.header}</div>
+    </>)
   }
 }
 

@@ -7,8 +7,8 @@ describe('parser', () => {
   const file = readFileSync(join(__dirname, "./fixture/simple.pdf"))
   const document = new PdfDocument(file)
   it('should parse', () => {
-    expect(document.getHeader()).toBe("%PDF-1.0")
-    expect(document.getTableOffset()).toBe(444)
+    expect(document.header).toBe("%PDF-1.0")
+    expect(document.tableOffset).toBe(444)
   })
   it('should return tableEntry', () => {
     const entries = document.getTableEntries()

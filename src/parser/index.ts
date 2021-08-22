@@ -87,12 +87,6 @@ export class PdfDocument {
       throw new Error("trailer is not dict")
     }
   }
-  getHeader(): string {
-    return this.header
-  }
-  getTableOffset(): number {
-    return this.tableOffset
-  }
   getTableEntry(index: number, gen?:number): IndirectObject | null {
     if (index === 0) {
       return null
