@@ -1,8 +1,8 @@
-import React from "react"
+import React, { useState } from "react"
 import { useRecoilState, useRecoilValue } from "recoil"
 import styled from "styled-components"
 import { IndirectObject } from "./parser"
-import { PdfArray, PdfDict, PdfName, PdfRef, PdfTopLevelObject } from "./parser/objectparser"
+import { PdfArray, PdfDict, PdfName, PdfRef, PdfStream, PdfTopLevelObject } from "./parser/objectparser"
 import { currentDocumentState, leftPanelState, rightPanelState } from "./states"
 
 const tabHeight = "40px"
@@ -46,50 +46,86 @@ overflow-y:scroll;
 
 const ObjectList = styled.ul`
 list-style: none;
-margin: 0 0 0 15px;
+margin: 0;
 padding: 0;
 `
-const ObjectListItem = styled.li`
+const ObjectListItem = styled.li<{openable?:boolean}>`
 list-style: none;
+margin: 0 0 0 15px;
 `
-const TreeRecursive: React.FC<{object:PdfTopLevelObject, prefix: string, indent:number}> = ({
-  object,prefix,indent
+
+const OpenIcon = styled.span<{opened:boolean}>`
+width: 0px;
+display: inline-block;
+position: relative;
+&:before {
+  position: absolute;
+  display: block;
+  content: ">";
+  top: -16px;
+  left: -15px;
+  font-size: 15px;
+  font-weight:bold;
+  ${props => props.opened ? "transform:rotate(90deg);" : ""}
+  cursor: pointer;
+}
+}
+`;
+const TreeRecursive: React.FC<{object:PdfTopLevelObject, prefix: string, defaultOpened?:boolean}> = ({
+  object,prefix,defaultOpened = false
 }) => {
+  const [opened, setOpened] = useState(defaultOpened)
   const currentDocument = useRecoilValue(currentDocumentState)
-  const prefixed = (e: React.ReactElement) => <span>{prefix}{e}</span>
+  const prefixed = (e: React.ReactElement, openable:boolean = false) => (<>
+    <ObjectListItem openable={openable}>
+      {openable ? <OpenIcon opened={opened} onClick={() => setOpened(b => !b)}/> : <></>}
+      {prefix}{e}
+    </ObjectListItem>
+  </>)
   if (object instanceof PdfDict) {
-    const children = Array.from(object.dict.entries())
-      .filter(([key, value]) => value instanceof PdfRef)
+    if (opened) {
+      const children = Array.from(object.dict.entries())
       .map(([key, value]) => (
-          <ObjectListItem>
-            <TreeRecursive object={value} prefix={"/" + key + " "} indent={indent+1}/>
-          </ObjectListItem>)
-      )
-    if (children.length > 0) {
-      return (
-        <div>
-            <ObjectListItem>{prefixed(<></>)}</ObjectListItem>
-            <ObjectList>
-              {children}
-            </ObjectList>
-        </div>
-      )
+        <TreeRecursive key={key} object={value} prefix={"/" + key + " "} defaultOpened={true}/>
+      ))
+      return prefixed(<>
+        <ObjectList>
+          {children}
+        </ObjectList>
+      </>, true)
     } else {
-      return prefixed(<>{"{map}"}</>)
+      return prefixed(<>{"{dict}"}</>, true)
     }
   } else if (object instanceof PdfArray) {
-    return prefixed(<>[array]</>)
+    if (opened) {
+      const children = object.array
+      .map((value, idx) => (
+        <TreeRecursive key={idx} object={value} prefix={""} defaultOpened={true}/>
+      ))
+      console.log(children)
+      return prefixed(<>
+        <ObjectList>
+          {children}
+        </ObjectList>
+      </>, true)
+    } else {
+      return prefixed(<>{"[array]"}</>, true)
+    }
   } else if (object instanceof PdfName) {
     return prefixed(<>{"/" + object.name}</>)
   } else if (object instanceof PdfRef) {
     const value = currentDocument.getTableEntry(object.objNumber).getValue()
-    return <TreeRecursive object={value} prefix={`${prefix} ref ${object.objNumber} `} indent={indent}/>
+    return <TreeRecursive object={value} prefix={`${prefix} ref ${object.objNumber} `} defaultOpened={false}/>
+  } else if (object instanceof PdfStream) {
+    return prefixed(<>stream</>)
   }
   return prefixed(<>{object}</>)
 }
 const Tree: React.FC = () => {
   const currentDocument = useRecoilValue(currentDocumentState)
-  return <TreeRecursive object={currentDocument.trailer} prefix="trailer" indent={0}/>
+  return <ObjectList>
+    <TreeRecursive object={currentDocument.trailer} prefix="trailer" defaultOpened={true}/>
+  </ObjectList>
 }
 
 const Panel: React.FC = () => {
