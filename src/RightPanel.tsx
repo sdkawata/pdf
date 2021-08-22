@@ -14,9 +14,9 @@ const ObjectDisplayRecursive: React.FC<{object:PdfObject, indent?:number, prefix
   if (object instanceof PdfDict) {
     return (<>
         {prefixed(<>{"{"}</>)}<br/>
-        {Object.keys(object.dict).map((key) => (
+        {Array.from(object.dict.entries()).map(([key, value]) => (
           <React.Fragment key={key}>
-            <ObjectDisplayRecursive object={object.dict[key]} indent={indent+1} prefix={`/${key} `}/>
+            <ObjectDisplayRecursive object={value} indent={indent+1} prefix={`/${key} `}/>
             <br/>
           </React.Fragment>
         ))}

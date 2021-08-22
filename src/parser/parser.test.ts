@@ -31,6 +31,6 @@ describe('parser', () => {
   })
   it('should parse trailer', () => {
     expect(document.trailer).toBeInstanceOf(PdfDict)
-    expect(document.trailer.dict["Size"]).toBe(6)
+    expect(document.trailer.dict.get("Size")).toBe(6)
   })
 })

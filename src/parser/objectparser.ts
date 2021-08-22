@@ -15,8 +15,8 @@ export class PdfArray {
 }
 
 export class PdfDict {
-  public readonly dict: {readonly [k:string]:PdfObject}
-  constructor(dict: {readonly [k:string]:PdfObject}) {
+  public readonly dict: ReadonlyMap<string, PdfObject>
+  constructor(dict: Map<string, PdfObject>) {
     this.dict = dict
   }
 }
@@ -144,14 +144,14 @@ const parseDict = (reader: Reader): PdfDict => {
   if (reader.readChar() !== '<') {
     throw new Error('unexpected token expect <')
   }
-  const dict = {}
+  const dict = new Map<string, PdfObject>()
   reader.skipSpace()
   while(reader.peekChar() !== '>') {
     const name = parseName(reader)
     reader.skipSpace()
     const value = parseObject(reader)
     reader.skipSpace()
-    dict[name.name] = value
+    dict.set(name.name, value)
   }
   if (reader.readChar() !== '>') {
     throw new Error('unexpected token expect >')

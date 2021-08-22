@@ -44,9 +44,9 @@ describe("parsePdfObject", () => {
     const value = parseString('<</a 1/b (abc)/c <</d 1 /c 3>> >>')
     expect(value).toBeInstanceOf(PdfDict)
     const dict = (value as PdfDict).dict
-    expect(dict['a']).toBe(1)
-    expect(dict['b']).toBe("abc")
-    expect(dict['c']).toBeInstanceOf(PdfDict)
+    expect(dict.get('a')).toBe(1)
+    expect(dict.get('b')).toBe("abc")
+    expect(dict.get('c')).toBeInstanceOf(PdfDict)
   })
   it("should parse array", () => {
     const value = parseString('[1 [2 3] (abc)]')
@@ -61,7 +61,7 @@ describe("parsePdfObject", () => {
     const value = parseString('<</a /b>>')
     expect(value).toBeInstanceOf(PdfDict)
     const dict = (value as PdfDict).dict
-    expectToBeName(dict['a'], 'b')
+    expectToBeName(dict.get('a'), 'b')
   })
   it("should parse array ending name with no space", () => {
     const value = parseString(`[/a /b]`)
@@ -89,13 +89,13 @@ describe("parseIndirectObject", () => {
     const result = parseString("1 0 obj\n<</a 1>>\nendobj")
     expect(result).toBeInstanceOf(PdfDict)
     const dict = (result as PdfDict).dict
-    expect(dict["a"]).toBe(1)
+    expect(dict.get("a")).toBe(1)
   })
   it("should parse stream", () => {
     const result = parseString("1 0 obj\n<</Length 1>>\nstream\n1\nendstream\nendobj")
     expect(result).toBeInstanceOf(PdfStream)
     const stream = result as PdfStream
-    expect(stream.dict.dict["Length"]).toBe(1)
+    expect(stream.dict.dict.get("Length")).toBe(1)
     expect(stream.offset).toBe("1 0 obj\n<</Length 1>>\nstream\n".length)
   })
 })
