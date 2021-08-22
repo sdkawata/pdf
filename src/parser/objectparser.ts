@@ -1,4 +1,3 @@
-import { PdfDocument } from "."
 import { Reader } from "./reader"
 
 export class PdfName {
@@ -66,7 +65,7 @@ export class PdfRef {
 
 export type PdfTopLevelObject = PdfObject | PdfStream
 
-export type PdfObject = boolean | number | string | PdfName | null | PdfArray | PdfDict | PdfRef
+export type PdfObject = boolean | number | ArrayBuffer | PdfName | null | PdfArray | PdfDict | PdfRef
 
 const isDigit = (i:number) => i >= 0x30 && i <= 0x39
 
@@ -101,26 +100,27 @@ const tryParseNumberOrRef = (reader:Reader): PdfRef | number => {
   return new PdfRef(number, second)
 }
 
-const parseString = (reader:Reader): string => {
-  let str = ""
+const parseString = (reader:Reader): ArrayBuffer => {
+  let result = []
   let parentheses = 0
   reader.readOne()
   while (reader.peekChar() !== ")" || parentheses !== 0) {
-    const char = reader.readChar()
+    const cp = reader.readOne()
+    const char = String.fromCharCode(cp)
     if (char === "\\") {
-      str += reader.readChar()
+      result.push(reader.readOne())
     } else if (char === "(") {
       parentheses+=1
-      str += char
+      result.push(cp)
     } else if (char === ")") {
       parentheses-=1
-      str += char
+      result.push(cp)
     } else {
-      str += char
+      result.push(cp)
     }
   }
   reader.readOne()
-  return str
+  return new Uint8Array(result).buffer
 }
 
 const isDelimiter  = (n:number) => 
@@ -192,16 +192,16 @@ const parseDict = (reader: Reader): PdfDict => {
 }
 
 
-const parseHexString = (reader:Reader): string => {
-  let str = ""
+const parseHexString = (reader:Reader): ArrayBuffer => {
+  let result = []
   reader.readOne()
   while (!reader.outOfBounds() && reader.peekChar() !== ">") {
     const char = reader.readChar()
     const char2 = reader.readChar()
-    str += String.fromCharCode(Number('0x' + char + char2))
+    result.push(Number('0x' + char + char2))
   }
   reader.readOne()
-  return str
+  return new Uint8Array(result).buffer
 }
 
 const parseArray = (reader: Reader): PdfArray => {

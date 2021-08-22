@@ -16,8 +16,6 @@ height: 100%;
 overflow: hidden;
 `
 
-
-
 const App: React.FC = () => {
   const [currentDocument, setCurrentDocument] = useRecoilState(currentDocumentState)
   const [rightPanel, setRightPanel] = useRecoilState(rightPanelState)

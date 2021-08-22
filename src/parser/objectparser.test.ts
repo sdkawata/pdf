@@ -10,6 +10,10 @@ describe("parsePdfObject", () => {
     expect(object).toBeInstanceOf(PdfName)
     expect((object as PdfName).name).toBe(name)
   }
+  const expectToBeString = (object: PdfObject, str: string) => {
+    expect(object).toBeInstanceOf(ArrayBuffer)
+    expect(String.fromCharCode.apply("", new Uint8Array(object as ArrayBuffer))).toBe(str)
+  }
   const expectToBeRef = (object: PdfObject, number: number, gen: number) => {
     expect(object).toBeInstanceOf(PdfRef)
     expect((object as PdfRef).objNumber).toBe(number)
@@ -25,9 +29,9 @@ describe("parsePdfObject", () => {
     expect(parseString(".25")).toBe(.25)
   })
   it("should parse string", () => {
-    expect(parseString("(Hello, World!)")).toBe("Hello, World!")
-    expect(parseString('(Some \\ escaped \\(characters)')).toBe("Some \ escaped (characters")
-    expect(parseString("(Red (Rouge))")).toBe("Red (Rouge)")
+    expectToBeString(parseString("(Hello, World!)"), "Hello, World!")
+    expectToBeString(parseString('(Some \\ escaped \\(characters)'), "Some \ escaped (characters")
+    expectToBeString(parseString("(Red (Rouge))"), "Red (Rouge)")
   })
   it("should parse name", () => {
     expectToBeName(parseString("/French "), "French")
@@ -45,7 +49,7 @@ describe("parsePdfObject", () => {
     expect(value).toBeInstanceOf(PdfDict)
     const dict = (value as PdfDict).dict
     expect(dict.get('a')).toBe(1)
-    expect(dict.get('b')).toBe("abc")
+    expectToBeString(dict.get('b'), "abc")
     expect(dict.get('c')).toBeInstanceOf(PdfDict)
   })
   it("should parse array", () => {
@@ -54,7 +58,7 @@ describe("parsePdfObject", () => {
     const array = (value as PdfArray).array
     expect(array[0]).toBe(1)
     expect(array[1]).toBeInstanceOf(PdfArray)
-    expect(array[2]).toBe("abc")
+    expectToBeString(array[2], "abc")
   })
   
   it("should parse dict ending name with no space", () => {
@@ -71,7 +75,7 @@ describe("parsePdfObject", () => {
     expectToBeName(array[1], "b")
   })
   it("should parse string", () => {
-    expect(parseString("<414243>")).toBe("ABC")
+    expectToBeString(parseString("<414243>"), "ABC")
   })
   it("should parse null", () => {
     expect(parseString("null")).toBe(null)

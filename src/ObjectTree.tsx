@@ -103,6 +103,8 @@ const TreeRecursive: React.FC<{object:PdfTopLevelObject, prefix: React.ReactElem
     }
   } else if (object instanceof PdfStream) {
     return prefixed(<>stream</>)
+  } else if (object instanceof ArrayBuffer) {
+    return prefixed(<>{String.fromCharCode.apply("", new Uint8Array(object))}</>)
   }
   return prefixed(<>{object}</>)
 }
