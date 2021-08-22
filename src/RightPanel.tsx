@@ -3,6 +3,7 @@ import { useRecoilState, useRecoilValue } from "recoil"
 import { PdfArray, PdfDict, PdfName, PdfObject, PdfRef, PdfStream, PdfTopLevelObject } from "./parser/objectparser"
 import { currentDocumentState, rightPanelState } from "./states"
 import styled from "styled-components"
+import ObjectTree from "./ObjectTree"
 
 const ObjectDisplayRecursive: React.FC<{object:PdfObject, indent?:number, prefix?: string}> = ({object, indent, prefix}) => {
   const [rightPanel, setRightPanel] = useRecoilState(rightPanelState)
@@ -57,8 +58,14 @@ background-color: #ccc;
 padding: 5px;
 `
 
-const ObjectDisplay: React.FC<{object:PdfObject}> = ({object}) => {
-  return <ValueField><ObjectDisplayRecursive object={object}/></ValueField>
+const ObjectDisplayWrapper = styled.div`
+border: 1px solid #aaa;
+`
+
+const ObjectDisplay: React.FC<{object:PdfObject, prefix:string}> = ({
+  object, prefix
+}) => {
+  return <ObjectDisplayWrapper><ObjectTree object={object} prefix={prefix} /></ObjectDisplayWrapper>
 }
 
 const StreamDisplay: React.FC<{stream:PdfStream}> = ({stream}) => {
@@ -68,11 +75,11 @@ const StreamDisplay: React.FC<{stream:PdfStream}> = ({stream}) => {
   }, [stream])
   return (
     <>
-      stream: offset:{stream.offset} dictionary:
+      stream: offset:{stream.offset}
       <br/>
-      <ObjectDisplay object={stream.dict}/>
+      <ObjectDisplay object={stream.dict} prefix="stream dictionary" />
       <br/>
-      <ValueField><pre><code>{str}</code></pre></ValueField>
+      <ObjectDisplayWrapper><pre><code>{str}</code></pre></ObjectDisplayWrapper>
     </>
   )
 }
@@ -81,7 +88,7 @@ const TopLevelObjectDisplay:React.FC<{object: PdfTopLevelObject}> = ({object}) =
   if (object instanceof PdfStream) {
     return <StreamDisplay stream={object}/>
   } else {
-    return <ObjectDisplay object={object} />
+    return <ObjectDisplay object={object} prefix={`object`}/>
   }
 }
 
