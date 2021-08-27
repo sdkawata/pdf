@@ -34,10 +34,8 @@ export class PdfDocument {
   public readonly tableOffset: number
   public readonly tableEntryOffset: number
   public readonly header: string
-  public readonly indexOffset: number
-  public readonly tableLength: number
-  public readonly tableEntryLength: number
   public readonly trailer: PdfDict
+  public readonly tableEntries: Map<number, IndirectObject>
   constructor(buf:ArrayBuffer) {
     this.buf = buf
     const reader = new Reader(buf)
@@ -53,19 +51,30 @@ export class PdfDocument {
     if (xref !== "xref") {
       throw new Error("invlid cross-ref table expect:xref got:" + xref)
     } 
+    this.tableEntries = this.parseCrossRefTable(reader)
+    this.trailer = this.parseTrailer(reader)
+  }
+
+  parseCrossRefTable(reader:Reader): Map<number, IndirectObject> {
     const tableHeader = reader.readLine()
-    const [indexOffset, tableLength] = tableHeader.split(" ")
-    this.indexOffset = Number(indexOffset)
-    if (this.indexOffset !== 0) {
-      throw new Error('indexOffset:' + this.indexOffset + ' not 0')
+    const [indexOffsetStr, tableLengthStr] = tableHeader.split(" ")
+    const indexOffset = Number(indexOffsetStr)
+    const tableLength = Number(tableLengthStr)
+    if (indexOffset !== 0) {
+      throw new Error('indexOffset:' + indexOffset + ' not 0')
     }
-    this.tableLength = Number(tableLength)
-    const startPos = this.tableEntryOffset = reader.pos()
+    const startPos = reader.pos()
     reader.readLine()
     const endPos = reader.pos()
-    this.tableEntryLength = endPos - startPos
-
-    this.trailer = this.parseTrailer(reader)
+    const entryLength = endPos - startPos
+    const map = new Map<number, IndirectObject>()
+    for (let i=1;i<tableLength;i++) {
+      reader.seek(startPos + entryLength * i)
+      const line = bufToString(this.buf, startPos + entryLength * i, entryLength)
+      const [offset, fileGen] = line.split(" ")
+      map.set(i, new IndirectObject(this.buf, i, Number(offset), Number(fileGen)))
+    }
+    return map
   }
 
   parseTrailer(reader:Reader): PdfDict {
@@ -86,17 +95,6 @@ export class PdfDocument {
     } else {
       throw new Error("trailer is not dict")
     }
-  }
-  getTableEntry(index: number, gen?:number): IndirectObject | null {
-    if (index === 0) {
-      return null
-    }
-    const line = bufToString(this.buf, this.tableEntryOffset + index * this.tableEntryLength, this.tableEntryLength)
-    const [offset, fileGen] = line.split(" ")
-    return new IndirectObject(this.buf, index, Number(offset), Number(fileGen))
-  }
-  getTableEntries(): (IndirectObject | null)[] {
-    return [...Array(this.tableLength).keys()].map((k) => this.getTableEntry(k))
   }
 }
 
