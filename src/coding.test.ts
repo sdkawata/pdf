@@ -2,8 +2,6 @@ import {autoDecode} from "./coding"
 
 it("a", () => {expect(true).toBe(true)})
 
-// なぜか動かないのでコメントアウト
-/*
 describe("autoDecode", () => {
   it("should decode UTF16LE" , () => {
     expect(autoDecode(new Uint8Array([0xff, 0xfe, 0x61, 0, 0x62, 0, 0x63, 0]).buffer)).toBe('abc')
@@ -15,4 +13,3 @@ describe("autoDecode", () => {
     expect(autoDecode(new Uint8Array([0x61, 0x62, 0x63]).buffer)).toBe('abc')
   })
 })
-*/
