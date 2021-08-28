@@ -282,7 +282,7 @@ export const parseIndirectObjectHeader = (reader:Reader): {objNumber: number, ge
   reader.skipSpace()
   const str = readUntilDelimiter(reader)
   if (str !== "obj") {
-    throw new Error("unexpected string expected obj")
+    throw new Error("unexpected string:" + str + " expected obj pos:" + reader.pos())
   }
   return {objNumber, gen}
 }
