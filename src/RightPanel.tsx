@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from "react"
 import { errorSelector, useRecoilState, useRecoilValue } from "recoil"
 import { PdfArray, PdfDict, PdfName, PdfObject, PdfRef, PdfStream, PdfTopLevelObject } from "./parser/objectparser"
-import { currentDocumentState, rightPanelState, useStringDisplayer } from "./states"
+import { rightPanelState, useCurrentDocument, useStringDisplayer } from "./states"
 import styled from "styled-components"
 import ObjectTree from "./ObjectTree"
 import Pako from "pako"
@@ -54,10 +54,10 @@ const isValueEqualName = (dict: PdfDict, key: string, name: string):boolean => {
 }
 
 const StreamDisplay: React.FC<{stream:PdfStream}> = ({stream}) => {
+  const currentDocument = useCurrentDocument()
   const getter = (objNumber, gen) => (
-    currentDocument.getTableEntry(objNumber, gen).getValue()
+    currentDocument.getObject(objNumber, gen).getValue(currentDocument)
   )
-  const currentDocument = useRecoilValue(currentDocumentState)
   const [showCanvas, setShowCanvas] = useState(false)
   const canvas = useRef<HTMLCanvasElement | undefined>(undefined)
   const [imageUrl, setImageUrl] = useState<string | undefined>(undefined)
@@ -188,17 +188,20 @@ overflow:scroll;
 `
 
 const Panel: React.FC = () => {
-  const currentDocument = useRecoilValue(currentDocumentState)
+  const currentDocument = useCurrentDocument()
   const rightPanel = useRecoilValue(rightPanelState)
   const objectPanel = useMemo(() => {
     if (rightPanel.state === "object") {
       try {
         const {objectNumber, gen} = rightPanel
-        const object = currentDocument.getTableEntry(objectNumber, gen)
-        const value = object.getValue()
+        const object = currentDocument.getObject(objectNumber, gen)
+        const value = object.getValue(currentDocument)
+        if (value === undefined) {
+          return <ErrorDisplay message="failed to get object"/>
+        }
         return (
           <>
-            <div>objNumber: {objectNumber} gen:{gen} offset: {object.offset}</div>
+            <div>objNumber: {objectNumber} gen:{gen}</div>
             <TopLevelObjectDisplay object={value} key={`${objectNumber}-${gen}`}/>
           </>
         )

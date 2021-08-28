@@ -2,7 +2,7 @@ import React, {useEffect} from "react"
 import { useRecoilState } from "recoil"
 import styled from "styled-components"
 import {parse} from './parser'
-import { currentDocumentState, filenameState, rightPanelState } from "./states"
+import { filenameState, rightPanelState, useCurrentDocumentSetter } from "./states"
 import LeftPanel from "./LeftPanel"
 import RightPanel from "./RightPanel"
 
@@ -17,7 +17,7 @@ overflow: hidden;
 `
 
 const App: React.FC = () => {
-  const [currentDocument, setCurrentDocument] = useRecoilState(currentDocumentState)
+  const setCurrentDocument = useCurrentDocumentSetter()
   const [filename, setFilename] = useRecoilState(filenameState)
   const [rightPanel, setRightPanel] = useRecoilState(rightPanelState)
   useEffect(() => {

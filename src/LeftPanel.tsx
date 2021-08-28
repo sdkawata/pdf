@@ -1,8 +1,9 @@
 import React from "react"
 import { useRecoilState, useRecoilValue } from "recoil"
 import styled from "styled-components"
-import { currentDocumentState, filenameState, leftPanelState, rightPanelState } from "./states"
+import { filenameState, leftPanelState, rightPanelState, useCurrentDocument} from "./states"
 import ObjectTree from "./ObjectTree"
+import { UncompressedIndirectObject } from "./parser"
 
 const tabHeight = "40px"
 const StyledTabSelector = styled.div`
@@ -49,7 +50,7 @@ background-color: ${props => props.selected ? "#ccc": "white"}
 `
 
 const Panel: React.FC = () => {
-  const currentDocument = useRecoilValue(currentDocumentState)
+  const currentDocument = useCurrentDocument()
   const filename = useRecoilValue(filenameState)
   const leftPanel = useRecoilValue(leftPanelState)
   const [rightPanel, setRightPanel] = useRecoilState(rightPanelState)
@@ -60,16 +61,20 @@ const Panel: React.FC = () => {
     return <>waiting for file. drag and drop pdf...</>
   }
   if (leftPanel.tab === "objects") {
-    const pdfObjects = currentDocument.getTableEntries()
+    const pdfObjects = currentDocument.tableEntries
     return (
       <>
         {pdfObjects.map((object,index) => {
           return <ObjectRow
             selected={rightPanel.state==="object" && rightPanel.objectNumber === index}
             key={index}
-            onClick={() => showObject(object.index, object.gen)}
+            onClick={() => showObject(object.objNumber, object.gen)}
           >
-            index:{index} {object ? <>gen:{object.gen} offset:{object.offset}</> : <></>}
+            index:{index} {object ? <>gen:{object.gen} {
+              object instanceof UncompressedIndirectObject
+              ? "uncompressed"
+              : "compressed"
+            }</> : <></>}
           </ObjectRow>
         })}
       </>
