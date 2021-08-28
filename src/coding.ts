@@ -1,7 +1,5 @@
 import Encoding from "encoding-japanese"
 
-console.log(Encoding)
-
 export const decodeAscii = (buf: ArrayBuffer) =>
   String.fromCharCode.apply("", new Uint8Array(buf))
 
