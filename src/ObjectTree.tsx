@@ -2,7 +2,7 @@ import React, { useState } from "react"
 import { useRecoilState, useRecoilValue } from "recoil"
 import styled from "styled-components"
 import { PdfArray, PdfDict, PdfName, PdfObject, PdfRef, PdfStream, PdfTopLevelObject } from "./parser/objectparser"
-import { currentDocumentState, rightPanelState, useStringDisplayer } from "./states"
+import { rightPanelState, useCurrentDocument, useStringDisplayer } from "./states"
 import {Error} from "./styled"
 
 
@@ -44,7 +44,7 @@ const TreeRecursive: React.FC<{object:PdfTopLevelObject, prefix: React.ReactElem
 }) => {
   const [opened, setOpened] = useState(defaultOpened)
   const [rightPanel, setRightPanel] = useRecoilState(rightPanelState)
-  const currentDocument = useRecoilValue(currentDocumentState)
+  const currentDocument = useCurrentDocument()
   const displayer = useStringDisplayer()
   const prefixed = (e: React.ReactElement, openable:boolean = false, children?: React.ReactElement) => (<>
     <ObjectListItem openable={openable}>
@@ -92,7 +92,7 @@ const TreeRecursive: React.FC<{object:PdfTopLevelObject, prefix: React.ReactElem
       setRightPanel({state: "object", objectNumber: object.objNumber, gen:object.gen})
     }
     try {
-      const value = currentDocument.getTableEntry(object.objNumber).getValue()
+      const value = currentDocument.getObject(object.objNumber).getValue(currentDocument)
       return <TreeRecursive
         object={value}
         prefix={<>{prefix}<a href="./" onClick={onClick}>{`ref ${object.objNumber}`}</a>{" "}</>}
@@ -109,7 +109,6 @@ const TreeRecursive: React.FC<{object:PdfTopLevelObject, prefix: React.ReactElem
   return prefixed(<>{object}</>)
 }
 const ObjectTree: React.FC<{object: PdfObject, prefix: string}> = ({object, prefix}) => {
-  const currentDocument = useRecoilValue(currentDocumentState)
   return <ObjectList>
     <TreeRecursive object={object} prefix={<>{prefix}</>} defaultOpened={true}/>
   </ObjectList>

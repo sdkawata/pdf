@@ -186,7 +186,7 @@ export class PdfDocument {
     }
   }
 
-  getObject(objNumber:number, gen:number): IndirectObject | undefined {
+  getObject(objNumber:number, gen:number = 0): IndirectObject | undefined {
     return this.tableEntries.find((obj) => obj.objNumber === objNumber && obj.gen === gen)
   }
 }
