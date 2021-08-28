@@ -46,6 +46,9 @@ const TreeRecursive: React.FC<{object:PdfTopLevelObject, prefix: React.ReactElem
   const [rightPanel, setRightPanel] = useRecoilState(rightPanelState)
   const currentDocument = useCurrentDocument()
   const displayer = useStringDisplayer()
+  if (currentDocument === undefined) {
+    return <></>
+  }
   const prefixed = (e: React.ReactElement, openable:boolean = false, children?: React.ReactElement) => (<>
     <ObjectListItem openable={openable}>
       <ObjectListLine onClick={() => setOpened(b => !b)} openable={openable}>
@@ -92,7 +95,10 @@ const TreeRecursive: React.FC<{object:PdfTopLevelObject, prefix: React.ReactElem
       setRightPanel({state: "object", objectNumber: object.objNumber, gen:object.gen})
     }
     try {
-      const value = currentDocument.getObject(object.objNumber).getValue(currentDocument)
+      const value = currentDocument.getObject(object.objNumber)?.getValue(currentDocument)
+      if (!value) {
+        return <ObjectListItem><Error>{"failed to get object"}</Error></ObjectListItem>
+      }
       return <TreeRecursive
         object={value}
         prefix={<>{prefix}<a href="./" onClick={onClick}>{`ref ${object.objNumber}`}</a>{" "}</>}

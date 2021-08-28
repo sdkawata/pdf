@@ -16,7 +16,7 @@ const checkEof = (reader:Reader) => {
   }
 }
 
-const nullGetter:ValueGetter = (index:number, gen:number) => {throw new Error("try to get value from null getter")}
+export const nullGetter:ValueGetter = (index:number, gen:number) => {throw new Error("try to get value from null getter")}
 export interface IndirectObject {
   readonly objNumber: number
   readonly gen: number

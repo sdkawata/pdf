@@ -56,14 +56,14 @@ const isValueEqualName = (dict: PdfDict, key: string, name: string):boolean => {
 const StreamDisplay: React.FC<{stream:PdfStream}> = ({stream}) => {
   const currentDocument = useCurrentDocument()
   const getter = (objNumber, gen) => (
-    currentDocument.getObject(objNumber, gen).getValue(currentDocument)
+    currentDocument?.getObject(objNumber, gen)?.getValue(currentDocument)!
   )
   const [showCanvas, setShowCanvas] = useState(false)
-  const canvas = useRef<HTMLCanvasElement | undefined>(undefined)
+  const canvas = useRef<HTMLCanvasElement | null>(null)
   const [imageUrl, setImageUrl] = useState<string | undefined>(undefined)
   const displayer = useStringDisplayer()
   useEffect(() => {
-    if (imageUrl !== "") {
+    if (imageUrl) {
       return () => {window.URL.revokeObjectURL(imageUrl)}
     }
   }, [imageUrl])
@@ -104,10 +104,10 @@ const StreamDisplay: React.FC<{stream:PdfStream}> = ({stream}) => {
         throw new Error("unexpected size expected: " + expectedSize + " actual: " + buf.byteLength)
       }
       let view = new Uint8Array(buf)
-      canvas.current.width = width
-      canvas.current.height = height
-      const context = canvas.current.getContext("2d")
-      const data = context.getImageData(0,0,width, height)
+      canvas.current!.width = width
+      canvas.current!.height = height
+      const context = canvas.current!.getContext("2d")
+      const data = context!.getImageData(0,0,width, height)
       const arr = data.data
       for (let iy =0;iy<height;iy++) {
         for (let ix=0;ix<width;ix++) {
@@ -117,7 +117,7 @@ const StreamDisplay: React.FC<{stream:PdfStream}> = ({stream}) => {
           arr[(iy*width + ix)* 4 + 3] = 255
         }
       }
-      context.putImageData(data,0,0)
+      context!.putImageData(data,0,0)
       setShowCanvas(true)
     } catch (e) {
       console.log(e)
@@ -191,11 +191,14 @@ const Panel: React.FC = () => {
   const currentDocument = useCurrentDocument()
   const rightPanel = useRecoilValue(rightPanelState)
   const objectPanel = useMemo(() => {
+    if (! currentDocument) {
+      return undefined
+    }
     if (rightPanel.state === "object") {
       try {
         const {objectNumber, gen} = rightPanel
         const object = currentDocument.getObject(objectNumber, gen)
-        const value = object.getValue(currentDocument)
+        const value = object?.getValue(currentDocument)
         if (value === undefined) {
           return <ErrorDisplay message="failed to get object"/>
         }

@@ -49,6 +49,9 @@ export const useStringDisplayer = ():Displayer => {
 
 export const useCurrentDocument = () => {
   const currentDocumentId = useRecoilValue(currentDocumentIdState)
+  if (!currentDocumentId) {
+    return undefined
+  }
   return documentMap.get(currentDocumentId)
 }
 
@@ -58,7 +61,9 @@ export const useCurrentDocumentSetter = () => {
   return useCallback((document: PdfDocument) => {
     const newId = uuidv4()
     documentMap.set(newId, document)
-    documentMap.delete(currentDocumentId)
+    if (currentDocumentId) {
+      documentMap.delete(currentDocumentId)
+    }
     setCurrentDocumentId(newId)
   }, [currentDocumentId])
 }

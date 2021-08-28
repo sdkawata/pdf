@@ -87,6 +87,7 @@ const Panel: React.FC = () => {
       <div>header: {currentDocument.header}</div>
     </>)
   }
+  return null
 }
 
 const LeftPanel: React.FC = () => {

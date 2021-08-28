@@ -1,3 +1,4 @@
+import { nullGetter } from "."
 import {parseIndirectObject, parseObject, PdfArray, PdfDict, PdfName, PdfObject, PdfRef, PdfStream} from "./objectparser"
 import { Reader } from "./reader"
 
@@ -6,15 +7,15 @@ describe("parsePdfObject", () => {
     const buffer = Buffer.from(string)
     return parseObject(new Reader(buffer, 0))
   }
-  const expectToBeName = (object: PdfObject, name: string) => {
+  const expectToBeName = (object: PdfObject | undefined, name: string) => {
     expect(object).toBeInstanceOf(PdfName)
     expect((object as PdfName).name).toBe(name)
   }
-  const expectToBeString = (object: PdfObject, str: string) => {
+  const expectToBeString = (object: PdfObject | undefined, str: string) => {
     expect(object).toBeInstanceOf(ArrayBuffer)
     expect(String.fromCharCode.apply("", new Uint8Array(object as ArrayBuffer))).toBe(str)
   }
-  const expectToBeRef = (object: PdfObject, number: number, gen: number) => {
+  const expectToBeRef = (object: PdfObject | undefined, number: number, gen: number) => {
     expect(object).toBeInstanceOf(PdfRef)
     expect((object as PdfRef).objNumber).toBe(number)
     expect((object as PdfRef).gen).toBe(gen)
@@ -103,7 +104,7 @@ describe("parseIndirectObject", () => {
     expect(result).toBeInstanceOf(PdfStream)
     const stream = result as PdfStream
     expect(stream.dict.dict.get("Length")).toBe(1)
-    const buf = stream.getValue()
+    const buf = stream.getValue(nullGetter)
     expect(buf.byteLength).toBe(1)
     const view = new Uint8Array(buf)
     expect(view[0]).toBe(0x31)
