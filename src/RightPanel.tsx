@@ -24,30 +24,6 @@ const ObjectDisplay: React.FC<{object:PdfObject, prefix:string}> = ({
 
 type ValueGetter = (objNumber: number, gen: number) => PdfTopLevelObject
 
-const tryDefilter = (getter: ValueGetter, stream: PdfStream): {info: string, buf: ArrayBuffer} => {
-  const buffer = stream.getValue(getter)
-  const filter = stream.dict.dict.get('Filter')
-  if (filter && (
-    (filter instanceof PdfName && filter.name === "FlateDecode") ||
-    (filter instanceof PdfArray && filter.array.length === 1 && filter.array[0] instanceof PdfName && filter.array[0].name === "FlateDecode")
-  )) {
-    try {
-      const deflated = Pako.inflate(new Uint8Array(buffer))
-      return {
-        info: "decoded by deflate",
-        buf: deflated,
-      }
-    } catch (e) {
-      throw e
-    }
-  } else {
-    return {
-      info: "raw data",
-      buf: buffer
-    }
-  }
-}
-
 const isValueEqualName = (dict: PdfDict, key: string, name: string):boolean => {
   const value = dict.dict.get(key)
   return value instanceof PdfName && value.name === name
@@ -73,7 +49,7 @@ const StreamDisplay: React.FC<{stream:PdfStream}> = ({stream}) => {
   const download = (e:React.MouseEvent) => {
     // cf: https://stackoverflow.com/questions/19327749/javascript-blob-filename-without-link
     e.preventDefault()
-    let {info, buf} = tryDefilter(getter, stream)
+    let {algo, buf} = stream.getDecoded(getter)
     const a = document.createElement("a")
     document.body.appendChild(a)
     const url = window.URL.createObjectURL(new Blob([buf]))
@@ -98,7 +74,7 @@ const StreamDisplay: React.FC<{stream:PdfStream}> = ({stream}) => {
       if (stream.dict.dict.get("BitsPerComponent") !== 8) {
         throw new Error("unsupported bitsperComponent")
       }
-      let {info, buf} = tryDefilter(getter, stream)
+      let {algo, buf} = stream.getDecoded(getter)
       const expectedSize = width * height * 3
       if (buf.byteLength < expectedSize) {
         throw new Error("unexpected size expected: " + expectedSize + " actual: " + buf.byteLength)
@@ -127,7 +103,7 @@ const StreamDisplay: React.FC<{stream:PdfStream}> = ({stream}) => {
   const loadToImg = (e:React.MouseEvent) => {
     e.preventDefault()
     try {
-      let {info, buf} = tryDefilter(getter, stream)
+      let {buf} = stream.getDecoded(getter)
       const url = window.URL.createObjectURL(new Blob([buf]))
       setImageUrl(url)
     } catch (e) {
@@ -137,8 +113,7 @@ const StreamDisplay: React.FC<{stream:PdfStream}> = ({stream}) => {
   }
   let {info, str} = displayed ? (() => {
     try {
-      console.log(displayed)
-      let {info, buf} = tryDefilter(getter, stream)
+      let {buf} = stream.getDecoded(getter)
       if (buf.byteLength >= DISPLAY_THRESHOLD) {
         return {info: "", str: ""}
       }
