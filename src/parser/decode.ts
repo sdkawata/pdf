@@ -1,5 +1,5 @@
 import Pako from "pako"
-import { PdfArray, PdfDict, PdfName, PdfObject, PdfStream } from "./objectparser"
+import { PdfName, PdfStream } from "./objectparser"
 import { ValueGetter } from "./types"
 
 export type DecodeResult = {
@@ -36,28 +36,28 @@ export const applyPngPredictor = (columns: number, buf:ArrayBuffer):ArrayBuffer 
 
 export const decode = (getter: ValueGetter, stream: PdfStream): DecodeResult => {
   const buffer = stream.getValue(getter)
-  const filter = stream.dict.dict.get('Filter')
+  const filter = stream.dict.get('Filter')
   if (filter && (
     (filter instanceof PdfName && filter.name === "FlateDecode") ||
-    (filter instanceof PdfArray && filter.array.length === 1 && filter.array[0] instanceof PdfName && filter.array[0].name === "FlateDecode")
+    (Array.isArray(filter) && filter.length === 1 && filter[0] instanceof PdfName && filter[0].name === "FlateDecode")
   )) {
     try {
       const deflated = Pako.inflate(new Uint8Array(buffer))
       // predictor
-      if (stream.dict.dict.get('DecodeParms')) {
-        const params = stream.dict.dict.get('DecodeParms')
-        if (! (params instanceof PdfDict)) {
+      if (stream.dict.get('DecodeParms')) {
+        const params = stream.dict.get('DecodeParms')
+        if (! (params instanceof Map)) {
           throw new Error("decode params is not dict")
         }
-        if (params.dict.get('Predictor')) {
-          const predictor = params.dict.get('Predictor')
+        if (params.get('Predictor')) {
+          const predictor = params.get('Predictor')
           if (typeof predictor !== "number") {
             throw new Error("predictor not number")
           }
           if (predictor !== 0) {
             let columns = 1
-            if (params.dict.get("Columns")) {
-              columns = params.dict.get("Columns") as number
+            if (params.get("Columns")) {
+              columns = params.get("Columns") as number
             }
             const result = applyPngPredictor(columns, deflated)
             return {

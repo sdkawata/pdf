@@ -100,22 +100,21 @@ export class PdfDocument {
       }
       this.trailer = obj.dict
       const {buf:crossRefBuf} = decode(nullGetter, obj)
-      if (! obj.dict.dict.get("W")) {
+      if (! obj.dict.get("W")) {
         throw new Error("cross reference stream do not contain W param")
       }
-      if (! (obj.dict.dict.get("W") instanceof PdfArray)) {
+      if (! (Array.isArray(obj.dict.get("W")))) {
         throw new Error("W param is not pdf array")
       }
-      const wArray = (obj.dict.dict.get("W") as PdfArray).array
-      if (! wArray.every((v) => typeof v === "number")) {
+      if (! (obj.dict.get("W") as PdfArray).every((v) => typeof v === "number")) {
         throw new Error("W contains non-number element")
       }
-      const w = wArray as number[]
+      const w = obj.dict.get("W") as number[]
       if (w.length !== 3) {
         throw new Error("invalid W length:" + w.length)
       }
-      const size = obj.dict.dict.get("Index") as number
-      const index = (obj.dict.dict.get("Index") as PdfArray).array as number[] || [0, size] 
+      const size = obj.dict.get("Index") as number
+      const index = obj.dict.get("Index")  as number[] || [0, size] 
       const crossRefReader = new Reader(crossRefBuf)
       const tableEntries: IndirectObject[] = []
       let currentIndex = index[0]
@@ -178,7 +177,7 @@ export class PdfDocument {
     reader.readLine()
     reader.skipEOL()
     const trailer = parseObject(reader)
-    if (trailer instanceof PdfDict) {
+    if (trailer instanceof Map) {
       return trailer
     } else {
       throw new Error("trailer is not dict")

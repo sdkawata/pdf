@@ -25,7 +25,7 @@ const ObjectDisplay: React.FC<{object:PdfObject, prefix:string}> = ({
 type ValueGetter = (objNumber: number, gen: number) => PdfTopLevelObject
 
 const isValueEqualName = (dict: PdfDict, key: string, name: string):boolean => {
-  const value = dict.dict.get(key)
+  const value = dict.get(key)
   return value instanceof PdfName && value.name === name
 }
 
@@ -63,15 +63,15 @@ const StreamDisplay: React.FC<{stream:PdfStream}> = ({stream}) => {
   const drawToCanvas = (e:React.MouseEvent) => {
     e.preventDefault()
     try {
-      const width = stream.dict.dict.get("Width")
-      const height = stream.dict.dict.get("Height")
+      const width = stream.dict.get("Width")
+      const height = stream.dict.get("Height")
       if (typeof width !== "number" || typeof height !== "number") {
         throw new Error("invalid width or height")
       }
       if (! isValueEqualName(stream.dict, "ColorSpace", "DeviceRGB")) {
         throw new Error("unsupported colorspace")
       }
-      if (stream.dict.dict.get("BitsPerComponent") !== 8) {
+      if (stream.dict.get("BitsPerComponent") !== 8) {
         throw new Error("unsupported bitsperComponent")
       }
       let {algo, buf} = stream.getDecoded(getter)

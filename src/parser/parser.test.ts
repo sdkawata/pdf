@@ -28,8 +28,8 @@ describe('parser', () => {
     entries[4].getValue(document)
   })
   it('should parse trailer', () => {
-    expect(document.trailer).toBeInstanceOf(PdfDict)
-    expect(document.trailer.dict.get("Size")).toBe(6)
+    expect(document.trailer).toBeInstanceOf(Map)
+    expect(document.trailer.get("Size")).toBe(6)
   })
 })
 
