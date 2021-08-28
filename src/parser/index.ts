@@ -1,5 +1,7 @@
-import { parseIndirectObject, parseObject, PdfDict, PdfTopLevelObject } from "./objectparser"
+import { decode } from "./decode"
+import { parseIndirectObject, parseObject, PdfDict, PdfStream, PdfTopLevelObject } from "./objectparser"
 import {bufToString, Reader} from "./reader"
+import { ValueGetter } from "./types"
 
 
 const checkHeader = (reader:Reader) => {
@@ -13,6 +15,8 @@ const checkEof = (reader:Reader) => {
     throw new Error("EOF string not found")
   }
 }
+
+const nullGetter:ValueGetter = (index:number, gen:number) => {throw new Error("try to get value from null getter")}
 export class IndirectObject {
   private readonly buf:ArrayBuffer
   public readonly offset:number
@@ -35,7 +39,7 @@ export class PdfDocument {
   public readonly tableEntryOffset: number
   public readonly header: string
   public readonly trailer: PdfDict
-  public readonly tableEntries: Map<number, IndirectObject>
+  public readonly tableEntries: IndirectObject[]
   constructor(buf:ArrayBuffer) {
     this.buf = buf
     const reader = new Reader(buf)
@@ -48,14 +52,21 @@ export class PdfDocument {
     this.tableOffset = tableOffset
     reader.seek(this.tableOffset)
     const xref = reader.readLine()
-    if (xref !== "xref") {
-      throw new Error("invlid cross-ref table expect:xref got:" + xref)
-    } 
-    this.tableEntries = this.parseCrossRefTable(reader)
-    this.trailer = this.parseTrailer(reader)
+    if (xref === "xref") {
+      this.tableEntries = this.parseCrossRefTable(reader)
+      this.trailer = this.parseTrailer(reader)
+    } else {
+      reader.seek(this.tableOffset)
+      const obj = parseIndirectObject(reader)
+      if (! (obj instanceof PdfStream)) {
+        throw new Error("invalid cross ref table: not stream")
+      }
+      this.trailer = obj.dict
+      const {buf} = decode(nullGetter, obj)
+    }
   }
 
-  parseCrossRefTable(reader:Reader): Map<number, IndirectObject> {
+  parseCrossRefTable(reader:Reader): IndirectObject[] {
     const tableHeader = reader.readLine()
     const [indexOffsetStr, tableLengthStr] = tableHeader.split(" ")
     const indexOffset = Number(indexOffsetStr)
@@ -67,14 +78,15 @@ export class PdfDocument {
     reader.readLine()
     const endPos = reader.pos()
     const entryLength = endPos - startPos
-    const map = new Map<number, IndirectObject>()
+    const result: IndirectObject[] = []
     for (let i=1;i<tableLength;i++) {
       reader.seek(startPos + entryLength * i)
       const line = bufToString(this.buf, startPos + entryLength * i, entryLength)
       const [offset, fileGen] = line.split(" ")
-      map.set(i, new IndirectObject(this.buf, i, Number(offset), Number(fileGen)))
+      result.push(new IndirectObject(this.buf, i, Number(offset), Number(fileGen)))
+      // TODO: parse cross ref stream
     }
-    return map
+    return result
   }
 
   parseTrailer(reader:Reader): PdfDict {
