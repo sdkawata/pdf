@@ -1,4 +1,6 @@
+import { decode, DecodeResult } from "./decode"
 import { Reader } from "./reader"
+import { ValueGetter } from "./types"
 
 export class PdfName {
   public readonly name: string
@@ -25,12 +27,13 @@ export class PdfStream {
   private readonly buf: ArrayBuffer
   public readonly offset:number
   public readonly dict: PdfDict
+  private decoded:DecodeResult | undefined
   constructor(buf: ArrayBuffer, offset: number, dict: PdfDict) {
     this.buf = buf
     this.offset = offset
     this.dict = dict
   }
-  getLength(getter?:(objNumber:number, gen:number) => PdfTopLevelObject): number {
+  getLength(getter?:ValueGetter): number {
     const length = this.dict.dict.get("Length")
     if (length instanceof PdfRef) {
       if (getter) {
@@ -52,6 +55,12 @@ export class PdfStream {
   getValue(getter?:(objNumber:number, gen:number) => PdfTopLevelObject): ArrayBuffer {
     const length = this.getLength(getter)
     return this.buf.slice(this.offset, this.offset + length)
+  }
+  getDecoded(getter?:(objNumber:number, gen:number) => PdfTopLevelObject): DecodeResult {
+    if (this.decoded) {
+      return this.decoded
+    }
+    return this.decoded = decode(getter, this)
   }
 }
 export class PdfRef {

@@ -1,5 +1,5 @@
 import { decode } from "./decode"
-import { parseIndirectObject, parseObject, PdfDict, PdfStream, PdfTopLevelObject } from "./objectparser"
+import { parseIndirectObject, parseIndirectObjectHeader, parseObject, PdfArray, PdfDict, PdfStream, PdfTopLevelObject } from "./objectparser"
 import {bufToString, Reader} from "./reader"
 import { ValueGetter } from "./types"
 
@@ -17,21 +17,59 @@ const checkEof = (reader:Reader) => {
 }
 
 const nullGetter:ValueGetter = (index:number, gen:number) => {throw new Error("try to get value from null getter")}
-export class IndirectObject {
+export interface IndirectObject {
+  readonly objNumber: number
+  readonly gen: number
+  getValue(document: PdfDocument): PdfTopLevelObject
+}
+export class UncompressedIndirectObject implements IndirectObject{
   private readonly buf:ArrayBuffer
-  public readonly offset:number
-  public readonly index: number
+  public readonly objNumber:number
   public readonly gen:number
-  constructor(buf:ArrayBuffer, index:number, offset:number,gen:number) {
+  public readonly offset:number
+  private value: PdfTopLevelObject | undefined
+  constructor(buf:ArrayBuffer, objNumber:number, offset:number,gen:number) {
     this.buf = buf
-    this.index = index
+    this.objNumber = objNumber
     this.offset = offset
     this.gen = gen
   }
-  getValue(): PdfTopLevelObject {
-    return parseIndirectObject(new Reader(this.buf, this.offset))
+  getValue(document: PdfDocument): PdfTopLevelObject {
+    console.log(this)
+    if (this.value) {
+      return this.value
+    }
+    return this.value = parseIndirectObject(new Reader(this.buf, this.offset))
   }
 }
+
+export class CompressedIndirectObject implements IndirectObject {
+  public readonly objNumber:number
+  public readonly gen:number
+  public readonly outerObjNumber:number
+  private value: PdfTopLevelObject | undefined
+  constructor(objNumber:number, gen:number, outerObjNumber: number) {
+    this.objNumber = objNumber
+    this.outerObjNumber = outerObjNumber
+    this.gen = gen
+  }
+  getValue(document: PdfDocument): PdfTopLevelObject {
+    if (this.value) {
+      return this.value
+    }
+    throw new Error("unimplemented")
+    /*
+    const outerObjValue = document.getObject(this.outerObjNumber, 0).getValue(document)
+    if (! (outerObjValue instanceof PdfStream)) {
+      throw new Error("outer object not stream")
+    }
+    const decoded = outerObjValue.getDecoded().buf
+    const reader = new Reader(decoded)
+    const line = reader.readLine()
+    */
+  }
+}
+
 
 export class PdfDocument {
   private readonly buf: ArrayBuffer
@@ -62,7 +100,47 @@ export class PdfDocument {
         throw new Error("invalid cross ref table: not stream")
       }
       this.trailer = obj.dict
-      const {buf} = decode(nullGetter, obj)
+      const {buf:crossRefBuf} = decode(nullGetter, obj)
+      if (! obj.dict.dict.get("W")) {
+        throw new Error("cross reference stream do not contain W param")
+      }
+      if (! (obj.dict.dict.get("W") instanceof PdfArray)) {
+        throw new Error("W param is not pdf array")
+      }
+      const wArray = (obj.dict.dict.get("W") as PdfArray).array
+      if (! wArray.every((v) => typeof v === "number")) {
+        throw new Error("W contains non-number element")
+      }
+      const w = wArray as number[]
+      if (w.length !== 3) {
+        throw new Error("invalid W length:" + w.length)
+      }
+      const size = obj.dict.dict.get("Index") as number
+      const index = (obj.dict.dict.get("Index") as PdfArray).array as number[] || [0, size] 
+      const crossRefReader = new Reader(crossRefBuf)
+      const tableEntries: IndirectObject[] = []
+      let currentIndex = index[0]
+      while(! crossRefReader.outOfBounds()) {
+        const type = w[0] > 0 ? crossRefReader.readBytesBE(w[0]) : 1
+        const f1 = w[1] > 0 ? crossRefReader.readBytesBE(w[1]) : 0
+        const f2 = w[2] > 0 ? crossRefReader.readBytesBE(w[2]) : -1
+        if (type === 1) {
+          reader.seek(f1)
+          const {objNumber,gen} = parseIndirectObjectHeader(reader)
+          if (objNumber != currentIndex) {
+            throw new Error("unexpected number expect:" + currentIndex + " got:" + objNumber)
+          }
+          tableEntries.push(new UncompressedIndirectObject(this.buf, objNumber, f1, gen))
+        } else if (type === 2) {
+          tableEntries.push(new CompressedIndirectObject(currentIndex, 0, f1))
+        } else if (type === 0) {
+          // free object skip
+        } else {
+          throw new Error("invalid type in cross ref stream:" + type)
+        }
+        currentIndex++
+      }
+      this.tableEntries = tableEntries
     }
   }
 
@@ -83,8 +161,7 @@ export class PdfDocument {
       reader.seek(startPos + entryLength * i)
       const line = bufToString(this.buf, startPos + entryLength * i, entryLength)
       const [offset, fileGen] = line.split(" ")
-      result.push(new IndirectObject(this.buf, i, Number(offset), Number(fileGen)))
-      // TODO: parse cross ref stream
+      result.push(new UncompressedIndirectObject(this.buf, i, Number(offset), Number(fileGen)))
     }
     return result
   }
@@ -107,6 +184,10 @@ export class PdfDocument {
     } else {
       throw new Error("trailer is not dict")
     }
+  }
+
+  getObject(objNumber:number, gen:number): IndirectObject | undefined {
+    return this.tableEntries.find((obj) => obj.objNumber === objNumber && obj.gen === gen)
   }
 }
 
