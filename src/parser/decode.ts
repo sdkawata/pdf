@@ -1,6 +1,6 @@
 import Pako from "pako"
+import { PdfDocument } from "."
 import { PdfName, PdfStream } from "./objectparser"
-import { ValueGetter } from "./types"
 
 export type DecodeResult = {
   algo: string,
@@ -34,8 +34,8 @@ export const applyPngPredictor = (columns: number, buf:ArrayBuffer):ArrayBuffer 
   return predicted
 }
 
-export const decode = (getter: ValueGetter, stream: PdfStream): DecodeResult => {
-  const buffer = stream.getValue(getter)
+export const decode = (document: PdfDocument | undefined, stream: PdfStream): DecodeResult => {
+  const buffer = stream.getValue(document)
   const filter = stream.dict.get('Filter')
   if (filter && (
     (filter instanceof PdfName && filter.name === "FlateDecode") ||

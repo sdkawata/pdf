@@ -22,8 +22,6 @@ const ObjectDisplay: React.FC<{object:PdfObject, prefix:string}> = ({
   return <ObjectDisplayWrapper><ObjectTree object={object} prefix={prefix} /></ObjectDisplayWrapper>
 }
 
-type ValueGetter = (objNumber: number, gen: number) => PdfTopLevelObject
-
 const isValueEqualName = (dict: PdfDict, key: string, name: string):boolean => {
   const value = dict.get(key)
   return value instanceof PdfName && value.name === name
@@ -43,13 +41,13 @@ const StreamDisplay: React.FC<{stream:PdfStream}> = ({stream}) => {
       return () => {window.URL.revokeObjectURL(imageUrl)}
     }
   }, [imageUrl])
-  const length = stream.getLength(getter)
+  const length = stream.getLength(currentDocument)
   const displayed = length < DISPLAY_THRESHOLD
   let errors : string[] = []
   const download = (e:React.MouseEvent) => {
     // cf: https://stackoverflow.com/questions/19327749/javascript-blob-filename-without-link
     e.preventDefault()
-    let {algo, buf} = stream.getDecoded(getter)
+    let {algo, buf} = stream.getDecoded(currentDocument)
     const a = document.createElement("a")
     document.body.appendChild(a)
     const url = window.URL.createObjectURL(new Blob([buf]))
@@ -74,7 +72,7 @@ const StreamDisplay: React.FC<{stream:PdfStream}> = ({stream}) => {
       if (stream.dict.get("BitsPerComponent") !== 8) {
         throw new Error("unsupported bitsperComponent")
       }
-      let {algo, buf} = stream.getDecoded(getter)
+      let {algo, buf} = stream.getDecoded(currentDocument)
       const expectedSize = width * height * 3
       if (buf.byteLength < expectedSize) {
         throw new Error("unexpected size expected: " + expectedSize + " actual: " + buf.byteLength)
@@ -103,7 +101,7 @@ const StreamDisplay: React.FC<{stream:PdfStream}> = ({stream}) => {
   const loadToImg = (e:React.MouseEvent) => {
     e.preventDefault()
     try {
-      let {buf} = stream.getDecoded(getter)
+      let {buf} = stream.getDecoded(currentDocument)
       const url = window.URL.createObjectURL(new Blob([buf]))
       setImageUrl(url)
     } catch (e) {
@@ -113,7 +111,7 @@ const StreamDisplay: React.FC<{stream:PdfStream}> = ({stream}) => {
   }
   let {algo, str} = displayed ? (() => {
     try {
-      let {algo, buf} = stream.getDecoded(getter)
+      let {algo, buf} = stream.getDecoded(currentDocument)
       if (buf.byteLength >= DISPLAY_THRESHOLD) {
         return {algo: undefined, str: ""}
       }

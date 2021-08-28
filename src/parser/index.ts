@@ -1,7 +1,6 @@
 import { decode } from "./decode"
 import { parseIndirectObject, parseIndirectObjectHeader, parseObject, PdfArray, PdfDict, PdfStream, PdfTopLevelObject } from "./objectparser"
 import {bufToString, Reader} from "./reader"
-import { ValueGetter } from "./types"
 
 
 const checkHeader = (reader:Reader) => {
@@ -15,8 +14,6 @@ const checkEof = (reader:Reader) => {
     throw new Error("EOF string not found")
   }
 }
-
-export const nullGetter:ValueGetter = (index:number, gen:number) => {throw new Error("try to get value from null getter")}
 export interface IndirectObject {
   readonly objNumber: number
   readonly gen: number
@@ -56,16 +53,15 @@ export class CompressedIndirectObject implements IndirectObject {
     if (this.value) {
       return this.value
     }
-    throw new Error("unimplemented")
-    /*
-    const outerObjValue = document.getObject(this.outerObjNumber, 0).getValue(document)
+    const outerObj = document.getObject(this.outerObjNumber, 0)
+    if (outerObj === undefined) {
+      throw new Error("cannot find outerobj")
+    }
+    const outerObjValue = outerObj.getValue(document)
     if (! (outerObjValue instanceof PdfStream)) {
       throw new Error("outer object not stream")
     }
-    const decoded = outerObjValue.getDecoded().buf
-    const reader = new Reader(decoded)
-    const line = reader.readLine()
-    */
+    throw new Error("unimplemented")
   }
 }
 
@@ -99,7 +95,7 @@ export class PdfDocument {
         throw new Error("invalid cross ref table: not stream")
       }
       this.trailer = obj.dict
-      const {buf:crossRefBuf} = decode(nullGetter, obj)
+      const {buf:crossRefBuf} = decode(undefined, obj)
       if (! obj.dict.get("W")) {
         throw new Error("cross reference stream do not contain W param")
       }
