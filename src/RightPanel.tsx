@@ -111,19 +111,19 @@ const StreamDisplay: React.FC<{stream:PdfStream}> = ({stream}) => {
       alert(e.message ? e.message : e)
     }
   }
-  let {info, str} = displayed ? (() => {
+  let {algo, str} = displayed ? (() => {
     try {
-      let {buf} = stream.getDecoded(getter)
+      let {algo, buf} = stream.getDecoded(getter)
       if (buf.byteLength >= DISPLAY_THRESHOLD) {
-        return {info: "", str: ""}
+        return {algo: undefined, str: ""}
       }
-      return {info, str: displayer(buf)}
+      return {algo, str: displayer(buf)}
     } catch (e) {
       console.log(e)
       errors.push(e.message ? e.message : e)
-      return {info: "", str: ""}
+      return {algo: undefined, str: ""}
     }
-  })() : {info:"", str: ""}
+  })() : {algo:undefined, str: ""}
   return (
     <>
       stream: offset:{stream.offset} length:{length}
@@ -131,7 +131,7 @@ const StreamDisplay: React.FC<{stream:PdfStream}> = ({stream}) => {
       <ObjectDisplay object={stream.dict} prefix="stream dictionary " />
       <br/>
       {errors.length > 0 && <StyledError>{errors.join("\n")}</StyledError>}
-      {info !== "" && <div>{info}</div>}
+      {algo && <div>{algo}</div>}
       {str !== "" && 
       <ObjectDisplayWrapper><pre><code>{str}</code></pre></ObjectDisplayWrapper>
       }
