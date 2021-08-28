@@ -1,4 +1,3 @@
-import { nullGetter } from "."
 import {parseIndirectObject, parseObject, PdfArray, PdfDict, PdfName, PdfObject, PdfRef, PdfStream} from "./objectparser"
 import { Reader } from "./reader"
 
@@ -104,7 +103,7 @@ describe("parseIndirectObject", () => {
     expect(result).toBeInstanceOf(PdfStream)
     const stream = result as PdfStream
     expect(stream.dict.get("Length")).toBe(1)
-    const buf = stream.getValue(nullGetter)
+    const buf = stream.getValue()
     expect(buf.byteLength).toBe(1)
     const view = new Uint8Array(buf)
     expect(view[0]).toBe(0x31)
@@ -115,8 +114,8 @@ describe("parseIndirectObject", () => {
     expect(result).toBeInstanceOf(PdfStream)
     const stream = result as PdfStream
     const getter = jest.fn().mockReturnValue(1)
-    expect(stream.getLength(getter)).toBe(1)
-    const buf = stream.getValue(getter)
+    expect(stream.getLength()).toBe(1)
+    const buf = stream.getValue()
     expect(buf.byteLength).toBe(1)
     const view = new Uint8Array(buf)
     expect(view[0]).toBe(0x31)

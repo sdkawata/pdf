@@ -1,6 +1,6 @@
+import { PdfDocument } from "."
 import { decode, DecodeResult } from "./decode"
 import { Reader } from "./reader"
-import { ValueGetter } from "./types"
 
 export class PdfName {
   public readonly name: string
@@ -23,11 +23,11 @@ export class PdfStream {
     this.offset = offset
     this.dict = dict
   }
-  getLength(getter?:ValueGetter): number {
+  getLength(document?: PdfDocument): number {
     const length = this.dict.get("Length")
     if (length instanceof PdfRef) {
-      if (getter) {
-        const value = getter(length.objNumber, length.gen)
+      if (document) {
+        const value = document.getObject(length.objNumber, length.gen)
         if (typeof value === "number") {
           return value
         } else {
@@ -42,15 +42,15 @@ export class PdfStream {
       throw new Error("illegal length type")
     }
   }
-  getValue(getter:(objNumber:number, gen:number) => PdfTopLevelObject): ArrayBuffer {
-    const length = this.getLength(getter)
+  getValue(document?: PdfDocument): ArrayBuffer {
+    const length = this.getLength(document)
     return this.buf.slice(this.offset, this.offset + length)
   }
-  getDecoded(getter:(objNumber:number, gen:number) => PdfTopLevelObject): DecodeResult {
+  getDecoded(document?:PdfDocument): DecodeResult {
     if (this.decoded) {
       return this.decoded
     }
-    return this.decoded = decode(getter, this)
+    return this.decoded = decode(document, this)
   }
 }
 export class PdfRef {
