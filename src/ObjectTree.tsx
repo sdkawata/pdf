@@ -1,7 +1,7 @@
 import React, { useState } from "react"
-import { useRecoilState, useRecoilValue } from "recoil"
+import { useRecoilState } from "recoil"
 import styled from "styled-components"
-import { PdfArray, PdfDict, PdfName, PdfObject, PdfRef, PdfStream, PdfTopLevelObject } from "./parser/objectparser"
+import { PdfName, PdfObject, PdfRef, PdfStream, PdfTopLevelObject } from "./parser/objectparser"
 import { rightPanelState, useCurrentDocument, useStringDisplayer } from "./states"
 import {Error} from "./styled"
 

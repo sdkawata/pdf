@@ -1,10 +1,9 @@
 import React, { useEffect, useMemo, useRef, useState } from "react"
-import { errorSelector, useRecoilState, useRecoilValue } from "recoil"
-import { PdfArray, PdfDict, PdfName, PdfObject, PdfRef, PdfStream, PdfTopLevelObject } from "./parser/objectparser"
+import { useRecoilState } from "recoil"
+import {  PdfDict, PdfName, PdfObject, PdfStream, PdfTopLevelObject } from "./parser/objectparser"
 import { rightPanelState, useCurrentDocument, useStringDisplayer } from "./states"
 import styled from "styled-components"
 import ObjectTree from "./ObjectTree"
-import Pako from "pako"
 import { CompressedIndirectObject, UncompressedIndirectObject } from "./parser"
 import { Error as StyledError } from "./styled"
 

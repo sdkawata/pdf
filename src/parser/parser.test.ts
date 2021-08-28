@@ -1,7 +1,6 @@
 import { PdfDocument, UncompressedIndirectObject } from "."
 import {readFileSync} from "fs"
 import {join} from "path"
-import { PdfDict } from "./objectparser"
 
 describe('parser', () => {
   const file = readFileSync(join(__dirname, "./fixture/simple.pdf"))
