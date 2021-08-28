@@ -66,15 +66,15 @@ const Panel: React.FC = () => {
       <>
         {pdfObjects.map((object,index) => {
           return <ObjectRow
-            selected={rightPanel.state==="object" && rightPanel.objectNumber === index}
-            key={index}
+            selected={rightPanel.state==="object" && rightPanel.objectNumber === object.objNumber}
+            key={object.objNumber}
             onClick={() => showObject(object.objNumber, object.gen)}
           >
-            index:{index} {object ? <>gen:{object.gen} {
+            number:{object.objNumber} gen:{object.gen} {
               object instanceof UncompressedIndirectObject
               ? "uncompressed"
               : "compressed"
-            }</> : <></>}
+            }
           </ObjectRow>
         })}
       </>

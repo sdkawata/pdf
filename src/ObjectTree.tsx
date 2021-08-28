@@ -97,7 +97,7 @@ const TreeRecursive: React.FC<{object:PdfTopLevelObject, prefix: React.ReactElem
     try {
       const value = currentDocument.getObject(object.objNumber)?.getValue(currentDocument)
       if (!value) {
-        return <ObjectListItem><Error>{"failed to get object"}</Error></ObjectListItem>
+        return <ObjectListItem><Error>{`ref ${object.objNumber}`}{"failed to get object"}</Error></ObjectListItem>
       }
       return <TreeRecursive
         object={value}
