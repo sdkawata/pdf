@@ -35,7 +35,6 @@ export class UncompressedIndirectObject implements IndirectObject{
     this.gen = gen
   }
   getValue(document: PdfDocument): PdfTopLevelObject {
-    console.log(this)
     if (this.value) {
       return this.value
     }
