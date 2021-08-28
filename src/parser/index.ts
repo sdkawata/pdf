@@ -1,5 +1,5 @@
 import { decode } from "./decode"
-import { parseIndirectObject, parseIndirectObjectHeader, parseObject, PdfArray, PdfDict, PdfStream, PdfTopLevelObject } from "./objectparser"
+import { parseIndirectObject, parseIndirectObjectHeader, parseNumber, parseObject, PdfArray, PdfDict, PdfStream, PdfTopLevelObject, readUntilDelimiter } from "./objectparser"
 import {bufToString, Reader} from "./reader"
 
 
@@ -61,7 +61,30 @@ export class CompressedIndirectObject implements IndirectObject {
     if (! (outerObjValue instanceof PdfStream)) {
       throw new Error("outer object not stream")
     }
-    throw new Error("unimplemented")
+    const {buf} = outerObjValue.getDecoded()
+    const reader = new Reader(buf)
+    const n = outerObjValue.dict.get("N") as number
+    if (!n || typeof n !== "number") {
+      throw new Error("invalid N or N not found")
+    }
+    const arr:number[] = []
+    let thisOffset = -1
+    for (let i=0;i<n;i++) {
+      let index = parseNumber(reader)
+      readUntilDelimiter(reader)
+      let offset = parseNumber(reader)
+      readUntilDelimiter(reader)
+      arr.push(index, offset)
+      if (index === this.objNumber) {
+        thisOffset = offset
+      }
+    }
+    if (thisOffset === -1) {
+      throw new Error("cannot find obj in objstream:" + JSON.stringify(arr))
+    }
+    const start = reader.pos()
+    reader.seek(start + thisOffset)
+    return parseObject(reader)
   }
 }
 
