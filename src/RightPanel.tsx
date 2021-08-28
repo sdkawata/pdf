@@ -5,12 +5,10 @@ import { rightPanelState, useCurrentDocument, useStringDisplayer } from "./state
 import styled from "styled-components"
 import ObjectTree from "./ObjectTree"
 import Pako from "pako"
+import { CompressedIndirectObject, UncompressedIndirectObject } from "./parser"
+import { Error as StyledError } from "./styled"
 
 const DISPLAY_THRESHOLD = 10000
-
-const StyledError = styled.div`
-background-color: red;
-`
 
 const ObjectDisplayWrapper = styled.div`
 border: 1px solid #aaa;
@@ -162,7 +160,7 @@ overflow:scroll;
 
 const Panel: React.FC = () => {
   const currentDocument = useCurrentDocument()
-  const rightPanel = useRecoilValue(rightPanelState)
+  const [rightPanel, setRightPanel] = useRecoilState(rightPanelState)
   const objectPanel = useMemo(() => {
     if (! currentDocument) {
       return undefined
@@ -171,16 +169,45 @@ const Panel: React.FC = () => {
       try {
         const {objectNumber, gen} = rightPanel
         const object = currentDocument.getObject(objectNumber, gen)
-        const value = object?.getValue(currentDocument)
-        if (value === undefined) {
-          return <ErrorDisplay message="failed to get object"/>
-        }
-        return (
-          <>
-            <div>objNumber: {objectNumber} gen:{gen}</div>
-            <TopLevelObjectDisplay object={value} key={`${objectNumber}-${gen}`}/>
-          </>
+        const objectDisplay = (
+          <div>
+              objNumber: {objectNumber} gen:{gen}
+              {" "}
+              {object instanceof CompressedIndirectObject
+                ? <>compressed in <a href="/" onClick={(e) => {
+                  e.preventDefault()
+                  setRightPanel({
+                    state: "object",
+                    objectNumber: object.outerObjNumber,
+                    gen: 0,
+                  })
+                }}>ref:{object.outerObjNumber}</a></>
+                : object instanceof UncompressedIndirectObject
+                  ? <>uncompressed offset: {object.offset}</>
+                  : <></>}
+            </div>
         )
+        try {
+          const value = object?.getValue(currentDocument)
+          if (value === undefined) {
+            return <>
+              {objectDisplay}
+              <ErrorDisplay message="failed to get object"/>
+            </>
+          }
+          return (
+            <>
+              {objectDisplay}
+              <TopLevelObjectDisplay object={value} key={`${objectNumber}-${gen}`}/>
+            </>
+          )
+        } catch(e) {
+          console.log(e)
+          return <>
+            {objectDisplay}
+            <ErrorDisplay message={e.message}/>
+          </>
+        }
       } catch(e) {
         console.log(e)
         return <ErrorDisplay message={e.message}/>
