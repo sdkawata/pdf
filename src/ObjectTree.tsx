@@ -58,9 +58,9 @@ const TreeRecursive: React.FC<{object:PdfTopLevelObject, prefix: React.ReactElem
       {children}
     </ObjectListItem>
   </>)
-  if (object instanceof PdfDict) {
+  if (object instanceof Map) {
     if (opened) {
-      const children = Array.from(object.dict.entries())
+      const children = Array.from(object.entries())
       .map(([key, value]) => (
         <TreeRecursive key={key} object={value} prefix={<>{"/" + key + " "}</>} defaultOpened={true}/>
       ))
@@ -72,9 +72,9 @@ const TreeRecursive: React.FC<{object:PdfTopLevelObject, prefix: React.ReactElem
     } else {
       return prefixed(<>{"{dict}"}</>, true)
     }
-  } else if (object instanceof PdfArray) {
+  } else if (Array.isArray(object)) {
     if (opened) {
-      const children = object.array
+      const children = object
       .map((value, idx) => (
         <TreeRecursive key={idx} object={value} prefix={<></>} defaultOpened={true}/>
       ))

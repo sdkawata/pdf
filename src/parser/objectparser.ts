@@ -9,19 +9,9 @@ export class PdfName {
   }
 }
 
-export class PdfArray {
-  public readonly array: readonly PdfObject[]
-  constructor(array: PdfObject[]){
-    this.array = array
-  }
-}
+export type PdfArray = ReadonlyArray<PdfObject>
 
-export class PdfDict {
-  public readonly dict: ReadonlyMap<string, PdfObject>
-  constructor(dict: Map<string, PdfObject>) {
-    this.dict = dict
-  }
-}
+export type PdfDict = ReadonlyMap<string, PdfObject>
 
 export class PdfStream {
   private readonly buf: ArrayBuffer
@@ -34,7 +24,7 @@ export class PdfStream {
     this.dict = dict
   }
   getLength(getter?:ValueGetter): number {
-    const length = this.dict.dict.get("Length")
+    const length = this.dict.get("Length")
     if (length instanceof PdfRef) {
       if (getter) {
         const value = getter(length.objNumber, length.gen)
@@ -199,7 +189,7 @@ const parseDict = (reader: Reader): PdfDict => {
   if (reader.readChar() !== '>') {
     throw new Error('unexpected token expect >')
   }
-  return new PdfDict(dict)
+  return dict
 }
 
 
@@ -229,7 +219,7 @@ const parseArray = (reader: Reader): PdfArray => {
   if (reader.readChar() !== ']') {
     throw new Error('unexpected token expect ]')
   }
-  return new PdfArray(array)
+  return array
 }
 
 export const parseObject = (reader:Reader):PdfObject => {
@@ -267,7 +257,7 @@ const readUntilDelimiter = (reader:Reader): string => {
 export const parseIndirectObject = (reader:Reader): PdfTopLevelObject => {
   parseIndirectObjectHeader(reader)
   const result = parseObject(reader)
-  if (result instanceof PdfDict) {
+  if (result instanceof Map) {
     const start = reader.pos()
     reader.skipSpace()
     const str = readUntilDelimiter(reader)

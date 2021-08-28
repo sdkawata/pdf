@@ -47,31 +47,31 @@ describe("parsePdfObject", () => {
   })
   it("should parse dict", () => {
     const value = parseString('<</a 1/b(abc)/c<</d 1 /c 3>>>>')
-    expect(value).toBeInstanceOf(PdfDict)
-    const dict = (value as PdfDict).dict
+    expect(value).toBeInstanceOf(Map)
+    const dict = value as PdfDict
     expect(dict.get('a')).toBe(1)
     expectToBeString(dict.get('b'), "abc")
-    expect(dict.get('c')).toBeInstanceOf(PdfDict)
+    expect(dict.get('c')).toBeInstanceOf(Map)
   })
   it("should parse array", () => {
     const value = parseString('[1 [2 3] (abc)]')
-    expect(value).toBeInstanceOf(PdfArray)
-    const array = (value as PdfArray).array
+    expect(Array.isArray(value)).toBe(true)
+    const array = value as PdfArray
     expect(array[0]).toBe(1)
-    expect(array[1]).toBeInstanceOf(PdfArray)
+    expect(Array.isArray(array[1])).toBe(true)
     expectToBeString(array[2], "abc")
   })
   
   it("should parse dict ending name with no space", () => {
     const value = parseString('<</a /b>>')
-    expect(value).toBeInstanceOf(PdfDict)
-    const dict = (value as PdfDict).dict
+    expect(value).toBeInstanceOf(Map)
+    const dict = value as PdfDict
     expectToBeName(dict.get('a'), 'b')
   })
   it("should parse array ending name with no space", () => {
     const value = parseString(`[/a /b]`)
-    expect(value).toBeInstanceOf(PdfArray)
-    const array = (value as PdfArray).array
+    expect(Array.isArray(value)).toBe(true)
+    const array = value as PdfArray
     expectToBeName(array[0], "a")
     expectToBeName(array[1], "b")
   })
@@ -95,15 +95,15 @@ describe("parseIndirectObject", () => {
   })
   it("should parse indirect object with dict", () => {
     const result = parseString("1 0 obj\n<</a 1>>\nendobj")
-    expect(result).toBeInstanceOf(PdfDict)
-    const dict = (result as PdfDict).dict
+    expect(result).toBeInstanceOf(Map)
+    const dict = result as PdfDict
     expect(dict.get("a")).toBe(1)
   })
   it("should parse stream", () => {
     const result = parseString("1 0 obj\n<</Length 1>>\nstream\n1\nendstream\nendobj")
     expect(result).toBeInstanceOf(PdfStream)
     const stream = result as PdfStream
-    expect(stream.dict.dict.get("Length")).toBe(1)
+    expect(stream.dict.get("Length")).toBe(1)
     const buf = stream.getValue(nullGetter)
     expect(buf.byteLength).toBe(1)
     const view = new Uint8Array(buf)
