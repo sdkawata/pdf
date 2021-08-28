@@ -43,4 +43,8 @@ describe('parse PDFv1.6', () => {
   it('should getValue', () => {
     document.tableEntries.forEach((entry) => entry.getValue(document))
   })
+  it('should getValue of compressed obj', () => {
+    const value = document.tableEntries[6].getValue(document)
+    expect(value).toBeInstanceOf(Map)
+  })
 })

@@ -68,7 +68,7 @@ export type PdfObject = boolean | number | ArrayBuffer | PdfName | null | PdfArr
 
 const isDigit = (i:number) => i >= 0x30 && i <= 0x39
 
-const parseNumber = (reader:Reader): number => {
+export const parseNumber = (reader:Reader): number => {
   let str = String.fromCharCode(reader.readOne())
   while (!reader.outOfBounds()  && (isDigit(reader.peek()) || reader.peek() === 0x2e)) {
     str += String.fromCharCode(reader.readOne())
@@ -246,7 +246,7 @@ export const parseObject = (reader:Reader):PdfObject => {
   }
   throw Error(`cannot parse unexpected ${String.fromCharCode(peeked)} (${peeked}) at offset ${reader.pos()}`)
 }
-const readUntilDelimiter = (reader:Reader): string => {
+export const readUntilDelimiter = (reader:Reader): string => {
   let str = ""
   while (!reader.outOfBounds() && !isDelimiter(reader.peek())) {
     const char = reader.readChar()
