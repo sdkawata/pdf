@@ -13,7 +13,7 @@ export class Reader {
   }
   readLine():string {
     const start = this.current
-    while (this.view[this.current] !== 0x0a && this.view[this.current] !== 0x0d) {
+    while (this.peek() !== 0x0a && this.peek() !== 0x0d) {
       this.current++
     }
     const str = bufToString(this.buf, start, this.current - start)
@@ -85,9 +85,18 @@ export class Reader {
     return String.fromCharCode(this.peek(offset))
   }
   readOne(): number {
-    return this.view[this.current++]
+    const result = this.peek()
+    this.current++
+    return result
   }
   readChar(): string {
     return String.fromCharCode(this.readOne())
+  }
+  readBytesBE(n:number): number {
+    let result = 0
+    for(let i=0;i<n;i++) {
+      result = result * 256 + this.readOne()
+    }
+    return result
   }
 }

@@ -2,6 +2,11 @@ import Pako from "pako"
 import { PdfArray, PdfDict, PdfName, PdfObject, PdfStream } from "./objectparser"
 import { ValueGetter } from "./types"
 
+export type DecodeResult = {
+  algo: string,
+  buf: ArrayBuffer,
+}
+
 export const applyPngPredictor = (columns: number, buf:ArrayBuffer):ArrayBuffer => {
   const rows = buf.byteLength / (columns+1)
   const predicted = new ArrayBuffer(rows * columns)
@@ -29,7 +34,7 @@ export const applyPngPredictor = (columns: number, buf:ArrayBuffer):ArrayBuffer 
   return predicted
 }
 
-export const decode = (getter: ValueGetter, stream: PdfStream): {algo: string, buf: ArrayBuffer} => {
+export const decode = (getter: ValueGetter, stream: PdfStream): DecodeResult => {
   const buffer = stream.getValue(getter)
   const filter = stream.dict.dict.get('Filter')
   if (filter && (
