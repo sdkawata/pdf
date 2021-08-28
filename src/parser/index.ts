@@ -107,17 +107,26 @@ export class PdfDocument {
     // parse cross-reference table
     this.tableOffset = tableOffset
     reader.seek(this.tableOffset)
+    const {objects, trailer} = this.parseCrossRef(reader)
+    this.tableEntries = objects
+    this.trailer = trailer
+  }
+
+  parseCrossRef(reader:Reader): {objects:IndirectObject[], trailer: PdfDict} {
+    const start = reader.pos()
     const xref = reader.readLine()
+    let ret: {objects:IndirectObject[], trailer: PdfDict} | undefined = undefined
     if (xref === "xref") {
-      this.tableEntries = this.parseCrossRefTable(reader)
-      this.trailer = this.parseTrailer(reader)
+      ret = {
+        objects: this.parseCrossRefTable(reader),
+        trailer: this.parseTrailer(reader),
+      }
     } else {
-      reader.seek(this.tableOffset)
+      reader.seek(start)
       const obj = parseIndirectObject(reader)
       if (! (obj instanceof PdfStream)) {
         throw new Error("invalid cross ref table: not stream")
       }
-      this.trailer = obj.dict
       const {buf:crossRefBuf} = decode(undefined, obj)
       if (! obj.dict.get("W")) {
         throw new Error("cross reference stream do not contain W param")
@@ -157,8 +166,26 @@ export class PdfDocument {
         }
         currentIndex++
       }
-      this.tableEntries = tableEntries
+      ret = {
+        objects: tableEntries,
+        trailer: obj.dict,
+      }
+      if (ret.trailer.get("Prev")) {
+        const previdx = ret.trailer.get("Prev")
+        if (typeof previdx !== "number") {
+          throw new Error("prev is number")
+        }
+        reader.seek(previdx)
+        const {objects: prevObjects} = this.parseCrossRef(reader)
+        return {
+          objects: ret.objects.concat(prevObjects),
+          trailer: ret.trailer,
+        }
+      } else {
+        return ret
+      }
     }
+    return ret
   }
 
   parseCrossRefTable(reader:Reader): IndirectObject[] {
