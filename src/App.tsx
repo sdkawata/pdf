@@ -23,14 +23,14 @@ const App: React.FC = () => {
   useEffect(() => {
     const dragOverListener = (e:DragEvent) => {
       e.preventDefault()
-      e.dataTransfer.dropEffect = 'copy'
+      e.dataTransfer!.dropEffect = 'copy'
     }
     const dragEnterListener = (e:DragEvent) => {
       e.preventDefault()
     }
     const dropListener = async (e:DragEvent) => {
       e.preventDefault()
-      const file = e.dataTransfer.files[0];
+      const file = e.dataTransfer!.files[0];
       const arrayBuffer = await new Promise((resolve) => {
         let reader = new FileReader()
         reader.addEventListener('load', () => {

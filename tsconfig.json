@@ -5,6 +5,7 @@
       "target": "es6",
       "allowSyntheticDefaultImports": true,
       "moduleResolution": "node",
-      "esModuleInterop": true
+      "esModuleInterop": true,
+      "strictNullChecks": true
   }
 }

@@ -52,11 +52,11 @@ export class PdfStream {
       throw new Error("illegal length type")
     }
   }
-  getValue(getter?:(objNumber:number, gen:number) => PdfTopLevelObject): ArrayBuffer {
+  getValue(getter:(objNumber:number, gen:number) => PdfTopLevelObject): ArrayBuffer {
     const length = this.getLength(getter)
     return this.buf.slice(this.offset, this.offset + length)
   }
-  getDecoded(getter?:(objNumber:number, gen:number) => PdfTopLevelObject): DecodeResult {
+  getDecoded(getter:(objNumber:number, gen:number) => PdfTopLevelObject): DecodeResult {
     if (this.decoded) {
       return this.decoded
     }
@@ -110,7 +110,7 @@ const tryParseNumberOrRef = (reader:Reader): PdfRef | number => {
 }
 
 const parseString = (reader:Reader): ArrayBuffer => {
-  let result = []
+  let result: number[]= []
   let parentheses = 0
   reader.readOne()
   while (reader.peekChar() !== ")" || parentheses !== 0) {
@@ -204,7 +204,7 @@ const parseDict = (reader: Reader): PdfDict => {
 
 
 const parseHexString = (reader:Reader): ArrayBuffer => {
-  let result = []
+  let result: number[] = []
   reader.readOne()
   while (!reader.outOfBounds() && reader.peekChar() !== ">") {
     const char = reader.readChar()
@@ -219,7 +219,7 @@ const parseArray = (reader: Reader): PdfArray => {
   if (reader.readChar() !== '[') {
     throw new Error('unexpected token expect [')
   }
-  const array = []
+  const array: PdfObject[] = []
   reader.skipSpace()
   while(reader.peekChar() !== ']') {
     const value = parseObject(reader)
