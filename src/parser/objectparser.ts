@@ -256,17 +256,7 @@ const readUntilDelimiter = (reader:Reader): string => {
   return str
 }
 export const parseIndirectObject = (reader:Reader): PdfTopLevelObject => {
-  reader.skipSpace()
-  // object number
-  parseNumber(reader)
-  reader.skipSpace()
-  // generation
-  parseNumber(reader)
-  reader.skipSpace()
-  const str = readUntilDelimiter(reader)
-  if (str !== "obj") {
-    throw new Error("unexpected string expected obj")
-  }
+  parseIndirectObjectHeader(reader)
   const result = parseObject(reader)
   if (result instanceof PdfDict) {
     const start = reader.pos()
@@ -281,4 +271,19 @@ export const parseIndirectObject = (reader:Reader): PdfTopLevelObject => {
     }
   }
   return result
+}
+
+export const parseIndirectObjectHeader = (reader:Reader): {objNumber: number, gen:number} => {
+  reader.skipSpace()
+  // object number
+  const objNumber = parseNumber(reader)
+  reader.skipSpace()
+  // generation
+  const gen = parseNumber(reader)
+  reader.skipSpace()
+  const str = readUntilDelimiter(reader)
+  if (str !== "obj") {
+    throw new Error("unexpected string expected obj")
+  }
+  return {objNumber, gen}
 }
