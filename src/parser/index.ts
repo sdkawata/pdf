@@ -82,6 +82,7 @@ export class CompressedIndirectObject implements IndirectObject {
     if (thisOffset === -1) {
       throw new Error("cannot find obj in objstream:" + JSON.stringify(arr))
     }
+    reader.skipSpace()
     const start = reader.pos()
     reader.seek(start + thisOffset)
     return parseObject(reader)
