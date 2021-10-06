@@ -4,6 +4,7 @@ import styled from "styled-components"
 import { filenameState, leftPanelState, rightPanelState, useCurrentDocument} from "./states"
 import ObjectTree from "./ObjectTree"
 import { UncompressedIndirectObject } from "./parser"
+import { hoverColor, selectedColor } from "./styled"
 
 const tabHeight = "40px"
 const StyledTabSelector = styled.div`
@@ -46,7 +47,10 @@ const TabSelector:React.FC = () => {
 
 const ObjectRow = styled.div<{selected?:boolean}>`
 cursor: pointer;
-background-color: ${props => props.selected ? "#ccc": "white"}
+background-color: ${props => props.selected ? selectedColor: "inherit"};
+&:hover {
+  background-color: ${hoverColor};
+}
 `
 
 const Panel: React.FC = () => {

@@ -3,7 +3,7 @@ import { useRecoilState } from "recoil"
 import styled from "styled-components"
 import { PdfName, PdfObject, PdfRef, PdfStream, PdfTopLevelObject } from "./parser/objectparser"
 import { rightPanelState, useCurrentDocument, useStringDisplayer } from "./states"
-import {Error} from "./styled"
+import {Error, hoverColor, selectedColor} from "./styled"
 
 
 const ObjectList = styled.ul`
@@ -16,11 +16,12 @@ list-style: none;
 margin: 0 0 0 15px;
 `
 
-const ObjectListLine = styled.div<{openable?:boolean}>`
+const ObjectListLine = styled.div<{openable?:boolean;selected:boolean;}>`
 ${props => props.openable ? "cursor:pointer;" : ""}
 &:hover {
-  background-color: #ffeccc;
+  background-color: ${hoverColor};
 }
+background-color: ${props => props.selected ? selectedColor: "inherit"}
 `
 
 const OpenIcon = styled.span<{opened:boolean}>`
@@ -39,8 +40,10 @@ position: relative;
 }
 }
 `;
-const TreeRecursive: React.FC<{object:PdfTopLevelObject, prefix: React.ReactElement, defaultOpened?:boolean}> = ({
-  object,prefix,defaultOpened = false
+const TreeRecursive: React.FC<{
+  object:PdfTopLevelObject, prefix: React.ReactElement, defaultOpened?:boolean, selected?:boolean
+}> = ({
+  object,prefix,defaultOpened = false, selected = false
 }) => {
   const [opened, setOpened] = useState(defaultOpened)
   const [rightPanel, setRightPanel] = useRecoilState(rightPanelState)
@@ -51,7 +54,7 @@ const TreeRecursive: React.FC<{object:PdfTopLevelObject, prefix: React.ReactElem
   }
   const prefixed = (e: React.ReactElement, openable:boolean = false, children?: React.ReactElement) => (<>
     <ObjectListItem openable={openable}>
-      <ObjectListLine onClick={() => setOpened(b => !b)} openable={openable}>
+      <ObjectListLine onClick={() => setOpened(b => !b)} openable={openable} selected={selected}>
         {openable ? <OpenIcon opened={opened}/> : <></>}
         {prefix}{e}
       </ObjectListLine>
@@ -103,6 +106,7 @@ const TreeRecursive: React.FC<{object:PdfTopLevelObject, prefix: React.ReactElem
         object={value}
         prefix={<>{prefix}<a href="./" onClick={onClick}>{`ref ${object.objNumber}`}</a>{" "}</>}
         defaultOpened={false}
+        selected={rightPanel.state === "object" && rightPanel.objectNumber === object.objNumber}
       />
     } catch (e) {
       return <ObjectListItem><Error>{e.message}</Error></ObjectListItem>
