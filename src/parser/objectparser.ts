@@ -27,7 +27,8 @@ export class PdfStream {
     const length = this.dict.get("Length")
     if (length instanceof PdfRef) {
       if (document) {
-        const value = document.getObject(length.objNumber, length.gen)
+        const object = document.getObject(length.objNumber, length.gen)
+        const value = object?.getValue(document)
         if (typeof value === "number") {
           return value
         } else {
